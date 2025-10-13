@@ -7,11 +7,15 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
 type App struct {
-	ctx context.Context
+	ctx               context.Context
+	monitoringActive  bool
+	servicesToMonitor []string
 }
 
 // ServiceStatus represents the status of a service
@@ -37,6 +41,27 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	a.monitoringActive = true
+
+	// Define services to monitor
+	a.servicesToMonitor = []string{
+		"apache2",
+		"mysql",
+		"postgresql",
+		"redis-server",
+		"nginx",
+		"php8.1-fpm",
+	}
+
+	// Start background service monitor
+	go a.StartServiceMonitor()
+
+	// Send initial log
+	wailsRuntime.EventsEmit(ctx, "service:log", LogMessage{
+		Timestamp: time.Now().Format("15:04:05"),
+		Level:     "info",
+		Message:   "LocalValet event-driven monitoring started",
+	})
 }
 
 // Greet returns a greeting for the given name
@@ -167,8 +192,82 @@ func (a *App) StopService(serviceName string) LogMessage {
 
 // ToggleService toggles a service on/off
 func (a *App) ToggleService(serviceName string, shouldStart bool) LogMessage {
+	var logMsg LogMessage
+
 	if shouldStart {
-		return a.StartService(serviceName)
+		logMsg = a.StartService(serviceName)
+	} else {
+		logMsg = a.StopService(serviceName)
 	}
-	return a.StopService(serviceName)
+
+	// Emit log event to frontend
+	wailsRuntime.EventsEmit(a.ctx, "service:log", logMsg)
+
+	// Trigger immediate status check for this service
+	go func() {
+		time.Sleep(500 * time.Millisecond) // Wait for service to start/stop
+		status := a.GetServiceStatus(serviceName)
+		wailsRuntime.EventsEmit(a.ctx, "service:status-changed", status)
+	}()
+
+	return logMsg
+}
+
+// StartServiceMonitor runs in background and monitors service status changes
+func (a *App) StartServiceMonitor() {
+	ticker := time.NewTicker(3 * time.Second)
+	defer ticker.Stop()
+
+	// Store last known status for each service
+	lastStatus := make(map[string]bool)
+
+	// Initialize with current status
+	for _, serviceName := range a.servicesToMonitor {
+		status := a.GetServiceStatus(serviceName)
+		lastStatus[serviceName] = status.IsRunning
+	}
+
+	for range ticker.C {
+		if !a.monitoringActive {
+			break
+		}
+
+		// Check each service
+		for _, serviceName := range a.servicesToMonitor {
+			status := a.GetServiceStatus(serviceName)
+
+			// Emit event ONLY if status has changed
+			if lastStatus[serviceName] != status.IsRunning {
+				wailsRuntime.EventsEmit(a.ctx, "service:status-changed", status)
+
+				// Log the change
+				logLevel := "info"
+				if status.IsRunning {
+					logLevel = "success"
+				} else {
+					logLevel = "warning"
+				}
+
+				wailsRuntime.EventsEmit(a.ctx, "service:log", LogMessage{
+					Timestamp: time.Now().Format("15:04:05"),
+					Level:     logLevel,
+					Message:   fmt.Sprintf("%s status changed: %s", serviceName, status.Message),
+				})
+
+				lastStatus[serviceName] = status.IsRunning
+			}
+		}
+	}
+}
+
+// GetAllServicesStatus returns status for all monitored services (for initial load)
+func (a *App) GetAllServicesStatus() []ServiceStatus {
+	statuses := make([]ServiceStatus, 0, len(a.servicesToMonitor))
+
+	for _, serviceName := range a.servicesToMonitor {
+		status := a.GetServiceStatus(serviceName)
+		statuses = append(statuses, status)
+	}
+
+	return statuses
 }

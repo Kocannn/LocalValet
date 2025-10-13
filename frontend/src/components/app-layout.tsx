@@ -16,13 +16,13 @@ export function AppLayout({ children, title = "LocalValet" }: AppLayoutProps) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="h-screen flex flex-col">
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1 text-black" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <h1 className="text-lg font-semibold">{title}</h1>
+          <h1 className="text-lg font-semibold text-black">{title}</h1>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4">
+        <div className="flex flex-1 flex-col gap-4 p-4 min-h-0 overflow-hidden">
           {children}
         </div>
       </SidebarInset>
