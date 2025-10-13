@@ -1,4 +1,6 @@
 import * as React from "react"
+import { NavLink } from "react-router-dom"
+import { Home, Server, Settings } from "lucide-react"
 
 import { SearchForm } from "@/components/search-form"
 import { VersionSwitcher } from "@/components/version-switcher"
@@ -15,18 +17,27 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-// This is sample data.
+// Navigation data with routing
 const data = {
   versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"],
   navMain: [
     {
-      title: "Dashboard",
-      url: "#",
+      title: "Navigation",
       items: [
         {
-          title: "Dashboard",
-          url: "#",
-          isActive: true,
+          title: "Home",
+          url: "/",
+          icon: Home,
+        },
+        {
+          title: "Services",
+          url: "/services",
+          icon: Server,
+        },
+        {
+          title: "Settings",
+          url: "/settings",
+          icon: Settings,
         },
       ],
     },
@@ -44,15 +55,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         {/* We create a SidebarGroup for each parent. */}
-        {data.navMain.map((item) => (
-          <SidebarGroup key={item.title}>
-            <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
+        {data.navMain.map((group) => (
+          <SidebarGroup key={group.title}>
+            <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {item.items.map((item) => (
+                {group.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={item.isActive}>
-                      <a href={item.url}>{item.title}</a>
+                    <SidebarMenuButton asChild>
+                      <NavLink 
+                        to={item.url}
+                        className={({ isActive }) => isActive ? 'bg-accent' : ''}
+                      >
+                        {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+                        {item.title}
+                      </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

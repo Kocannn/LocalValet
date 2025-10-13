@@ -4,6 +4,8 @@ import {main} from '../models';
 
 export function CheckSudoAccess():Promise<boolean>;
 
+export function GetAllServicesStatus():Promise<Array<main.ServiceStatus>>;
+
 export function GetAvailableServices():Promise<Array<main.ServiceConfig>>;
 
 export function GetServiceStatus(arg1:string):Promise<main.ServiceStatus>;
@@ -13,6 +15,8 @@ export function GetSystemInfo():Promise<Record<string, string>>;
 export function Greet(arg1:string):Promise<string>;
 
 export function StartService(arg1:string):Promise<main.LogMessage>;
+
+export function StartServiceMonitor():Promise<void>;
 
 export function StopService(arg1:string):Promise<main.LogMessage>;
 

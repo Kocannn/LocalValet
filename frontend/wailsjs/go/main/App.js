@@ -6,6 +6,10 @@ export function CheckSudoAccess() {
   return window['go']['main']['App']['CheckSudoAccess']();
 }
 
+export function GetAllServicesStatus() {
+  return window['go']['main']['App']['GetAllServicesStatus']();
+}
+
 export function GetAvailableServices() {
   return window['go']['main']['App']['GetAvailableServices']();
 }
@@ -24,6 +28,10 @@ export function Greet(arg1) {
 
 export function StartService(arg1) {
   return window['go']['main']['App']['StartService'](arg1);
+}
+
+export function StartServiceMonitor() {
+  return window['go']['main']['App']['StartServiceMonitor']();
 }
 
 export function StopService(arg1) {
