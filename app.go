@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -43,24 +45,28 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.monitoringActive = true
 
-	// Define services to monitor
-	a.servicesToMonitor = []string{
-		"apache2",
-		"mysql",
-		"postgresql",
-		"redis-server",
-		"nginx",
-		"php8.1-fpm",
+	// Define services to monitor based on configured services
+	configs := GetServiceConfigs()
+	a.servicesToMonitor = make([]string, 0, len(configs))
+
+	for _, config := range configs {
+		serviceName := GetServiceName(config.DisplayName)
+		a.servicesToMonitor = append(a.servicesToMonitor, serviceName)
 	}
 
 	// Start background service monitor
 	go a.StartServiceMonitor()
 
-	// Send initial log
+	// Send initial log with binary source info
+	binarySource := "system binaries"
+	if runtime.GOOS == "windows" {
+		binarySource = "custom binaries (bin/windows/)"
+	}
+
 	wailsRuntime.EventsEmit(ctx, "service:log", LogMessage{
 		Timestamp: time.Now().Format("15:04:05"),
 		Level:     "info",
-		Message:   "LocalValet event-driven monitoring started",
+		Message:   fmt.Sprintf("LocalValet started on %s using %s", runtime.GOOS, binarySource),
 	})
 }
 
@@ -98,12 +104,23 @@ func (a *App) GetServiceStatus(serviceName string) ServiceStatus {
 			}
 		}
 	case "windows":
-		// Windows - check with sc query
-		cmd := exec.Command("sc", "query", serviceName)
+		// Windows - check if process is running
+		// For custom binaries, we check if the process exists
+		execPath := GetExecutablePath(serviceName)
+		processName := filepath.Base(execPath)
+
+		cmd := exec.Command("tasklist", "/FI", fmt.Sprintf("IMAGENAME eq %s", processName), "/NH")
 		output, err := cmd.Output()
-		if err == nil && strings.Contains(string(output), "RUNNING") {
-			isRunning = true
-			message = fmt.Sprintf("%s is running", serviceName)
+
+		if err == nil {
+			outputStr := strings.TrimSpace(string(output))
+			// Check if the output contains the process name and doesn't contain "No tasks"
+			if strings.Contains(outputStr, processName) && !strings.Contains(outputStr, "No tasks") {
+				isRunning = true
+				message = fmt.Sprintf("%s is running", serviceName)
+			} else {
+				message = fmt.Sprintf("%s is stopped", serviceName)
+			}
 		} else {
 			message = fmt.Sprintf("%s is stopped", serviceName)
 		}
@@ -123,17 +140,31 @@ func (a *App) StartService(serviceName string) LogMessage {
 
 	switch runtime.GOOS {
 	case "linux":
-		// Use systemctl to start service
+		// Use systemctl to start service (system binaries)
 		cmd = exec.Command("sudo", "systemctl", "start", serviceName)
+		cmd.Env = os.Environ()
 		err = cmd.Run()
 	case "darwin":
-		// macOS - use brew services
+		// macOS - use brew services (system binaries)
 		cmd = exec.Command("brew", "services", "start", serviceName)
 		err = cmd.Run()
 	case "windows":
-		// Windows - use net start
-		cmd = exec.Command("net", "start", serviceName)
-		err = cmd.Run()
+		// Windows - use custom binaries from bin folder
+		execPath := GetExecutablePath(serviceName)
+		workDir := GetServiceWorkingDirectory(serviceName)
+
+		cmd = exec.Command(execPath)
+		if workDir != "" {
+			cmd.Dir = workDir
+		}
+
+		// Start the process in background
+		err = cmd.Start()
+
+		if err == nil {
+			// Detach the process so it continues running
+			go cmd.Wait()
+		}
 	}
 
 	timestamp := time.Now().Format("15:04:05")
@@ -160,16 +191,21 @@ func (a *App) StopService(serviceName string) LogMessage {
 
 	switch runtime.GOOS {
 	case "linux":
-		// Use systemctl to stop service
-		cmd = exec.Command("sudo", "systemctl", "stop", serviceName)
+		// Use systemctl to stop service (system binaries)
+		cmd = exec.Command("pkexec", "systemctl", "stop", serviceName)
+		cmd.Env = os.Environ()
 		err = cmd.Run()
 	case "darwin":
-		// macOS - use brew services
+		// macOS - use brew services (system binaries)
 		cmd = exec.Command("brew", "services", "stop", serviceName)
 		err = cmd.Run()
 	case "windows":
-		// Windows - use net stop
-		cmd = exec.Command("net", "stop", serviceName)
+		// Windows - kill the process for custom binaries
+		execPath := GetExecutablePath(serviceName)
+		processName := strings.TrimSuffix(filepath.Base(execPath), filepath.Ext(execPath)) + ".exe"
+
+		// Use taskkill to stop the process
+		cmd = exec.Command("taskkill", "/F", "/IM", processName)
 		err = cmd.Run()
 	}
 
@@ -270,4 +306,22 @@ func (a *App) GetAllServicesStatus() []ServiceStatus {
 	}
 
 	return statuses
+}
+
+// GetBinarySourceInfo returns information about where binaries are executed from
+func (a *App) GetBinarySourceInfo() map[string]interface{} {
+	info := make(map[string]interface{})
+
+	info["os"] = runtime.GOOS
+	info["using_system_binaries"] = IsUsingSystemBinaries()
+
+	if runtime.GOOS == "windows" {
+		info["binary_location"] = "bin/windows/"
+		info["binary_validation"] = ValidateWindowsBinaries()
+	} else {
+		info["binary_location"] = "system"
+		info["binary_validation"] = nil
+	}
+
+	return info
 }
