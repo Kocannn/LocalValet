@@ -39,7 +39,7 @@ func (a *App) GetSystemInfo() map[string]string {
 func getServiceCommand(action, serviceName string) *exec.Cmd {
 	switch runtime.GOOS {
 	case "linux":
-		return exec.Command("sudo", "systemctl", action, serviceName)
+		return exec.Command("pkexec", "systemctl", action, serviceName)
 	case "darwin":
 		return exec.Command("brew", "services", action, serviceName)
 	case "windows":
