@@ -1,13 +1,11 @@
 package main
 
 import (
+	"LocalValet/internal/platform"
+	"LocalValet/internal/platform/domain"
 	"context"
 	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
@@ -18,6 +16,8 @@ type App struct {
 	ctx               context.Context
 	monitoringActive  bool
 	servicesToMonitor []string
+
+	serviceManager domain.ServiceManager
 }
 
 // ServiceStatus represents the status of a service
@@ -36,7 +36,9 @@ type LogMessage struct {
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	return &App{}
+	return &App{
+		serviceManager: platform.NewServiceManager(),
+	}
 }
 
 // startup is called when the app starts. The context is saved
@@ -77,96 +79,19 @@ func (a *App) Greet(name string) string {
 
 // GetServiceStatus checks if a service is running
 func (a *App) GetServiceStatus(serviceName string) ServiceStatus {
-	isRunning := false
-	message := ""
-
-	switch runtime.GOOS {
-	case "linux":
-		// Use systemctl to check service status
-		cmd := exec.Command("systemctl", "is-active", serviceName)
-		output, err := cmd.Output()
-		if err == nil && strings.TrimSpace(string(output)) == "active" {
-			isRunning = true
-			message = fmt.Sprintf("%s is running", serviceName)
-		} else {
-			message = fmt.Sprintf("%s is stopped", serviceName)
-		}
-	case "darwin":
-		// macOS - check with brew services
-		cmd := exec.Command("brew", "services", "list")
-		output, err := cmd.Output()
-		if err == nil {
-			if strings.Contains(string(output), serviceName) && strings.Contains(string(output), "started") {
-				isRunning = true
-				message = fmt.Sprintf("%s is running", serviceName)
-			} else {
-				message = fmt.Sprintf("%s is stopped", serviceName)
-			}
-		}
-	case "windows":
-		// Windows - check if process is running
-		// For custom binaries, we check if the process exists
-		execPath := GetExecutablePath(serviceName)
-		processName := filepath.Base(execPath)
-
-		cmd := exec.Command("tasklist", "/FI", fmt.Sprintf("IMAGENAME eq %s", processName), "/NH")
-		output, err := cmd.Output()
-
-		if err == nil {
-			outputStr := strings.TrimSpace(string(output))
-			// Check if the output contains the process name and doesn't contain "No tasks"
-			if strings.Contains(outputStr, processName) && !strings.Contains(outputStr, "No tasks") {
-				isRunning = true
-				message = fmt.Sprintf("%s is running", serviceName)
-			} else {
-				message = fmt.Sprintf("%s is stopped", serviceName)
-			}
-		} else {
-			message = fmt.Sprintf("%s is stopped", serviceName)
-		}
-	}
+	isRunning, msg := a.serviceManager.GetServiceStatus(serviceName)
 
 	return ServiceStatus{
 		Name:      serviceName,
 		IsRunning: isRunning,
-		Message:   message,
+		Message:   msg,
 	}
 }
 
 // StartService starts a service
 func (a *App) StartService(serviceName string) LogMessage {
-	var cmd *exec.Cmd
-	var err error
 
-	switch runtime.GOOS {
-	case "linux":
-		// Use systemctl to start service (system binaries)
-		cmd = exec.Command("sudo", "systemctl", "start", serviceName)
-		cmd.Env = os.Environ()
-		err = cmd.Run()
-	case "darwin":
-		// macOS - use brew services (system binaries)
-		cmd = exec.Command("brew", "services", "start", serviceName)
-		err = cmd.Run()
-	case "windows":
-		// Windows - use custom binaries from bin folder
-		execPath := GetExecutablePath(serviceName)
-		workDir := GetServiceWorkingDirectory(serviceName)
-
-		cmd = exec.Command(execPath)
-		if workDir != "" {
-			cmd.Dir = workDir
-		}
-
-		// Start the process in background
-		err = cmd.Start()
-
-		if err == nil {
-			// Detach the process so it continues running
-			go cmd.Wait()
-		}
-	}
-
+	err := a.serviceManager.StartService(serviceName)
 	timestamp := time.Now().Format("15:04:05")
 
 	if err != nil {
@@ -186,30 +111,9 @@ func (a *App) StartService(serviceName string) LogMessage {
 
 // StopService stops a service
 func (a *App) StopService(serviceName string) LogMessage {
-	var cmd *exec.Cmd
-	var err error
-
-	switch runtime.GOOS {
-	case "linux":
-		// Use systemctl to stop service (system binaries)
-		cmd = exec.Command("pkexec", "systemctl", "stop", serviceName)
-		cmd.Env = os.Environ()
-		err = cmd.Run()
-	case "darwin":
-		// macOS - use brew services (system binaries)
-		cmd = exec.Command("brew", "services", "stop", serviceName)
-		err = cmd.Run()
-	case "windows":
-		// Windows - kill the process for custom binaries
-		execPath := GetExecutablePath(serviceName)
-		processName := strings.TrimSuffix(filepath.Base(execPath), filepath.Ext(execPath)) + ".exe"
-
-		// Use taskkill to stop the process
-		cmd = exec.Command("taskkill", "/F", "/IM", processName)
-		err = cmd.Run()
-	}
 
 	timestamp := time.Now().Format("15:04:05")
+	err := a.serviceManager.StopService(serviceName)
 
 	if err != nil {
 		return LogMessage{
