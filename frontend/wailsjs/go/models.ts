@@ -16,28 +16,6 @@ export namespace main {
 	        this.message = source["message"];
 	    }
 	}
-	export class ModuleConfig {
-	    displayName: string;
-	    serviceName: string;
-	    installed: boolean;
-	    enabled: boolean;
-	    installCommand: string;
-	    description: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ModuleConfig(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.displayName = source["displayName"];
-	        this.serviceName = source["serviceName"];
-	        this.installed = source["installed"];
-	        this.enabled = source["enabled"];
-	        this.installCommand = source["installCommand"];
-	        this.description = source["description"];
-	    }
-	}
 	export class ServiceConfig {
 	    DisplayName: string;
 	    Linux: string;
@@ -70,18 +48,6 @@ export namespace main {
 	        this.name = source["name"];
 	        this.isRunning = source["isRunning"];
 	        this.message = source["message"];
-	    }
-	}
-	export class UserPreferences {
-	    enabledModules: string[];
-	
-	    static createFrom(source: any = {}) {
-	        return new UserPreferences(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.enabledModules = source["enabledModules"];
 	    }
 	}
 
