@@ -78,11 +78,6 @@ func (a *App) startup(ctx context.Context) {
 	})
 }
 
-// Greet returns a greeting for the given name
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
-}
-
 // GetServiceStatus checks if a service is running
 func (a *App) GetServiceStatus(serviceName string) domain.ServiceStatus {
 	isRunning, msg := a.serviceManager.GetServiceStatus(serviceName)
@@ -140,20 +135,48 @@ func (a *App) StopService(serviceName string) LogMessage {
 func (a *App) ToggleService(serviceName string, shouldStart bool) LogMessage {
 	var logMsg LogMessage
 
+	// 1. Eksekusi perintah Start/Stop (Blocking operation)
 	if shouldStart {
 		logMsg = a.StartService(serviceName)
 	} else {
 		logMsg = a.StopService(serviceName)
 	}
 
-	// Emit log event to frontend
+	// 2. Emit log hasil eksekusi (Berhasil/Gagal mengirim perintah)
 	wailsRuntime.EventsEmit(a.ctx, "service:log", logMsg)
 
-	// Trigger immediate status check for this service
+	// 3. FIX: Gunakan Goroutine dengan Polling Smart, bukan Sleep buta
 	go func() {
-		time.Sleep(500 * time.Millisecond) // Wait for service to start/stop
-		status := a.GetServiceStatus(serviceName)
-		wailsRuntime.EventsEmit(a.ctx, "service:status-changed", status)
+		// Kita beri batas waktu maksimal 5 detik untuk status berubah.
+		// Jika lebih dari 5 detik, kita menyerah (mencegah infinite loop).
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		// Cek setiap 200 milidetik
+		ticker := time.NewTicker(200 * time.Millisecond)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				// Kasus A: Waktu habis (Timeout 5 detik tercapai)
+				// Kirim status terakhir apa adanya, meski mungkin belum berubah.
+				finalStatus := a.GetServiceStatus(serviceName)
+				wailsRuntime.EventsEmit(a.ctx, "service:status-changed", finalStatus)
+				return
+
+			case <-ticker.C:
+				// Kasus B: Saatnya mengecek (setiap 200ms)
+				currentStatus := a.GetServiceStatus(serviceName)
+
+				// Jika status servicenya SUDAH sesuai dengan keinginan user (shouldStart),
+				// maka kita kirim update ke UI dan hentikan loop ini segera.
+				if currentStatus.IsRunning == shouldStart {
+					wailsRuntime.EventsEmit(a.ctx, "service:status-changed", currentStatus)
+					return
+				}
+			}
+		}
 	}()
 
 	return logMsg
