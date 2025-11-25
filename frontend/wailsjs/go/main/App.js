@@ -34,10 +34,6 @@ export function StartService(arg1) {
   return window['go']['main']['App']['StartService'](arg1);
 }
 
-export function StartServiceMonitor() {
-  return window['go']['main']['App']['StartServiceMonitor']();
-}
-
 export function StopService(arg1) {
   return window['go']['main']['App']['StopService'](arg1);
 }
