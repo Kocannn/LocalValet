@@ -1,3 +1,24 @@
+export namespace domain {
+	
+	export class ServiceStatus {
+	    name: string;
+	    isRunning: boolean;
+	    message: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ServiceStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.isRunning = source["isRunning"];
+	        this.message = source["message"];
+	    }
+	}
+
+}
+
 export namespace main {
 	
 	export class LogMessage {
@@ -32,22 +53,6 @@ export namespace main {
 	        this.Linux = source["Linux"];
 	        this.Darwin = source["Darwin"];
 	        this.Windows = source["Windows"];
-	    }
-	}
-	export class ServiceStatus {
-	    name: string;
-	    isRunning: boolean;
-	    message: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ServiceStatus(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.isRunning = source["isRunning"];
-	        this.message = source["message"];
 	    }
 	}
 

@@ -3,6 +3,7 @@ package main
 import (
 	"LocalValet/internal/platform"
 	"LocalValet/internal/platform/domain"
+	servicemonitor "LocalValet/internal/service_monitor"
 	"context"
 	"fmt"
 	"runtime"
@@ -18,13 +19,8 @@ type App struct {
 	servicesToMonitor []string
 
 	serviceManager domain.ServiceManager
-}
-
-// ServiceStatus represents the status of a service
-type ServiceStatus struct {
-	Name      string `json:"name"`
-	IsRunning bool   `json:"isRunning"`
-	Message   string `json:"message"`
+	monitor        *servicemonitor.ServiceMonitor
+	emitter        servicemonitor.EventEmitter
 }
 
 // LogMessage represents a log entry
@@ -43,11 +39,11 @@ func NewApp() *App {
 
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
+
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.monitoringActive = true
 
-	// Define services to monitor based on configured services
 	configs := GetServiceConfigs()
 	a.servicesToMonitor = make([]string, 0, len(configs))
 
@@ -56,16 +52,26 @@ func (a *App) startup(ctx context.Context) {
 		a.servicesToMonitor = append(a.servicesToMonitor, serviceName)
 	}
 
-	// Start background service monitor
-	go a.StartServiceMonitor()
+	// Create emitter
+	a.emitter = servicemonitor.NewEventEmitter(ctx)
 
-	// Send initial log with binary source info
+	// Create monitor instance
+	a.monitor = servicemonitor.NewServiceMonitor(
+		a.serviceManager,
+		a.servicesToMonitor,
+		a.emitter,
+	)
+
+	// Start monitoring using context
+	go a.monitor.Start(ctx)
+
+	// Startup log
 	binarySource := "system binaries"
 	if runtime.GOOS == "windows" {
 		binarySource = "custom binaries (bin/windows/)"
 	}
 
-	wailsRuntime.EventsEmit(ctx, "service:log", LogMessage{
+	a.emitter.Emit("service:log", LogMessage{
 		Timestamp: time.Now().Format("15:04:05"),
 		Level:     "info",
 		Message:   fmt.Sprintf("LocalValet started on %s using %s", runtime.GOOS, binarySource),
@@ -78,10 +84,10 @@ func (a *App) Greet(name string) string {
 }
 
 // GetServiceStatus checks if a service is running
-func (a *App) GetServiceStatus(serviceName string) ServiceStatus {
+func (a *App) GetServiceStatus(serviceName string) domain.ServiceStatus {
 	isRunning, msg := a.serviceManager.GetServiceStatus(serviceName)
 
-	return ServiceStatus{
+	return domain.ServiceStatus{
 		Name:      serviceName,
 		IsRunning: isRunning,
 		Message:   msg,
@@ -153,56 +159,9 @@ func (a *App) ToggleService(serviceName string, shouldStart bool) LogMessage {
 	return logMsg
 }
 
-// StartServiceMonitor runs in background and monitors service status changes
-func (a *App) StartServiceMonitor() {
-	ticker := time.NewTicker(3 * time.Second)
-	defer ticker.Stop()
-
-	// Store last known status for each service
-	lastStatus := make(map[string]bool)
-
-	// Initialize with current status
-	for _, serviceName := range a.servicesToMonitor {
-		status := a.GetServiceStatus(serviceName)
-		lastStatus[serviceName] = status.IsRunning
-	}
-
-	for range ticker.C {
-		if !a.monitoringActive {
-			break
-		}
-
-		// Check each service
-		for _, serviceName := range a.servicesToMonitor {
-			status := a.GetServiceStatus(serviceName)
-
-			// Emit event ONLY if status has changed
-			if lastStatus[serviceName] != status.IsRunning {
-				wailsRuntime.EventsEmit(a.ctx, "service:status-changed", status)
-
-				// Log the change
-				logLevel := "info"
-				if status.IsRunning {
-					logLevel = "success"
-				} else {
-					logLevel = "warning"
-				}
-
-				wailsRuntime.EventsEmit(a.ctx, "service:log", LogMessage{
-					Timestamp: time.Now().Format("15:04:05"),
-					Level:     logLevel,
-					Message:   fmt.Sprintf("%s status changed: %s", serviceName, status.Message),
-				})
-
-				lastStatus[serviceName] = status.IsRunning
-			}
-		}
-	}
-}
-
 // GetAllServicesStatus returns status for all monitored services (for initial load)
-func (a *App) GetAllServicesStatus() []ServiceStatus {
-	statuses := make([]ServiceStatus, 0, len(a.servicesToMonitor))
+func (a *App) GetAllServicesStatus() []domain.ServiceStatus {
+	statuses := make([]domain.ServiceStatus, 0, len(a.servicesToMonitor))
 
 	for _, serviceName := range a.servicesToMonitor {
 		status := a.GetServiceStatus(serviceName)
