@@ -1,6 +1,9 @@
 package main
 
+// ini masih kode sementara yaww
+
 import (
+	configprovider "LocalValet/internal/config_provider"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -58,7 +61,7 @@ func GetExecutablePath(displayName string) string {
 	}
 
 	// For Linux/macOS, return the service name (system will find it)
-	return GetServiceName(displayName)
+	return configprovider.NewConfigProvider().GetServiceName(displayName)
 }
 
 // getWindowsExecutablePath constructs the full path to Windows binary
@@ -68,13 +71,13 @@ func getWindowsExecutablePath(displayName string) string {
 
 	if !exists {
 		// Fallback to service name if config not found
-		return GetServiceName(displayName)
+		return configprovider.NewConfigProvider().GetServiceName(displayName)
 	}
 
 	// Get the executable directory (where the compiled binary is)
 	exePath, err := os.Executable()
 	if err != nil {
-		return GetServiceName(displayName)
+		return configprovider.NewConfigProvider().GetServiceName(displayName)
 	}
 	exeDir := filepath.Dir(exePath)
 
@@ -93,7 +96,7 @@ func getWindowsExecutablePath(displayName string) string {
 	}
 
 	// Fallback to service name if binary not found
-	return GetServiceName(displayName)
+	return configprovider.NewConfigProvider().GetServiceName(displayName)
 }
 
 // GetServiceWorkingDirectory returns the working directory for the service

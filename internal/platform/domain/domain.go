@@ -12,3 +12,10 @@ type ServiceStatus struct {
 	IsRunning bool   `json:"isRunning"`
 	Message   string `json:"message"`
 }
+
+type BinarySourceInfo struct {
+	OS                  string      `json:"os"`
+	UsingSystemBinaries bool        `json:"using_system_binaries"`
+	BinaryLocation      string      `json:"binary_location"`
+	BinaryValidation    interface{} `json:"binary_validation"` // Bisa dispesifikkan lagi jika strukturnya jelas
+}

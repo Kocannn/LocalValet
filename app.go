@@ -1,7 +1,7 @@
 package main
 
 import (
-	"LocalValet/internal/platform"
+	configprovider "LocalValet/internal/config_provider"
 	"LocalValet/internal/platform/domain"
 	servicemonitor "LocalValet/internal/service_monitor"
 	"context"
@@ -18,6 +18,7 @@ type App struct {
 	monitoringActive  bool
 	servicesToMonitor []string
 
+	configProvider configprovider.ConfigProvider
 	serviceManager domain.ServiceManager
 	monitor        *servicemonitor.ServiceMonitor
 	emitter        servicemonitor.EventEmitter
@@ -31,9 +32,10 @@ type LogMessage struct {
 }
 
 // NewApp creates a new App application struct
-func NewApp() *App {
+func NewApp(sm domain.ServiceManager, cf configprovider.ConfigProvider) *App {
 	return &App{
-		serviceManager: platform.NewServiceManager(),
+		serviceManager: sm,
+		configProvider: cf,
 	}
 }
 
@@ -44,11 +46,11 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.monitoringActive = true
 
-	configs := GetServiceConfigs()
+	configs := a.configProvider.GetServiceConfigs()
 	a.servicesToMonitor = make([]string, 0, len(configs))
 
 	for _, config := range configs {
-		serviceName := GetServiceName(config.DisplayName)
+		serviceName := a.configProvider.GetServiceName(config.DisplayName)
 		a.servicesToMonitor = append(a.servicesToMonitor, serviceName)
 	}
 
@@ -149,7 +151,7 @@ func (a *App) ToggleService(serviceName string, shouldStart bool) LogMessage {
 	go func() {
 		// Kita beri batas waktu maksimal 5 detik untuk status berubah.
 		// Jika lebih dari 5 detik, kita menyerah (mencegah infinite loop).
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(a.ctx, 5*time.Second)
 		defer cancel()
 
 		// Cek setiap 200 milidetik
@@ -195,18 +197,16 @@ func (a *App) GetAllServicesStatus() []domain.ServiceStatus {
 }
 
 // GetBinarySourceInfo returns information about where binaries are executed from
-func (a *App) GetBinarySourceInfo() map[string]interface{} {
-	info := make(map[string]interface{})
-
-	info["os"] = runtime.GOOS
-	info["using_system_binaries"] = IsUsingSystemBinaries()
+func (a *App) GetBinarySourceInfo() domain.BinarySourceInfo {
+	info := domain.BinarySourceInfo{
+		OS:                  runtime.GOOS,
+		UsingSystemBinaries: IsUsingSystemBinaries(),
+		BinaryLocation:      "system",
+	}
 
 	if runtime.GOOS == "windows" {
-		info["binary_location"] = "bin/windows/"
-		info["binary_validation"] = ValidateWindowsBinaries()
-	} else {
-		info["binary_location"] = "system"
-		info["binary_validation"] = nil
+		info.BinaryLocation = "bin/windows/"
+		info.BinaryValidation = ValidateWindowsBinaries()
 	}
 
 	return info

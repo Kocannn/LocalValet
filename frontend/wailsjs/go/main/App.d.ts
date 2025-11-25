@@ -7,9 +7,7 @@ export function CheckSudoAccess():Promise<boolean>;
 
 export function GetAllServicesStatus():Promise<Array<domain.ServiceStatus>>;
 
-export function GetAvailableServices():Promise<Array<main.ServiceConfig>>;
-
-export function GetBinarySourceInfo():Promise<Record<string, any>>;
+export function GetBinarySourceInfo():Promise<domain.BinarySourceInfo>;
 
 export function GetServiceStatus(arg1:string):Promise<domain.ServiceStatus>;
 
