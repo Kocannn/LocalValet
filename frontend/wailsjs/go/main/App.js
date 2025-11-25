@@ -10,10 +10,6 @@ export function GetAllServicesStatus() {
   return window['go']['main']['App']['GetAllServicesStatus']();
 }
 
-export function GetAvailableServices() {
-  return window['go']['main']['App']['GetAvailableServices']();
-}
-
 export function GetBinarySourceInfo() {
   return window['go']['main']['App']['GetBinarySourceInfo']();
 }

@@ -1,6 +1,8 @@
 package main
 
 import (
+	configprovider "LocalValet/internal/config_provider"
+	"LocalValet/internal/platform"
 	"embed"
 
 	"github.com/wailsapp/wails/v2"
@@ -14,7 +16,10 @@ var assets embed.FS
 
 func main() {
 	// Create an instance of the app structure
-	app := NewApp()
+	serviceManager := platform.NewServiceManager()
+	configProvider := configprovider.NewConfigProvider()
+
+	app := NewApp(serviceManager, configProvider)
 
 	// Create application with options
 	err := wails.Run(&options.App{
