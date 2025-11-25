@@ -15,8 +15,6 @@ export function GetServiceStatus(arg1:string):Promise<domain.ServiceStatus>;
 
 export function GetSystemInfo():Promise<Record<string, string>>;
 
-export function Greet(arg1:string):Promise<string>;
-
 export function StartService(arg1:string):Promise<main.LogMessage>;
 
 export function StopService(arg1:string):Promise<main.LogMessage>;
