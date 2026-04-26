@@ -5,5 +5,5 @@
  * Import from here to maintain clean imports across the application.
  */
 
-export type { ServiceModule, ServiceStatus } from './service.types';
+export type { ServiceModule, ServiceStatus, ServiceConfig } from './service.types';
 export type { LogEntry, LogLevel } from './log.types';

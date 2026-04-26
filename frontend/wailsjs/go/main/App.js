@@ -6,6 +6,10 @@ export function CheckSudoAccess() {
   return window['go']['main']['App']['CheckSudoAccess']();
 }
 
+export function GetActiveServiceVersion(arg1) {
+  return window['go']['main']['App']['GetActiveServiceVersion'](arg1);
+}
+
 export function GetAllServicesStatus() {
   return window['go']['main']['App']['GetAllServicesStatus']();
 }
@@ -22,8 +26,16 @@ export function GetServiceStatus(arg1) {
   return window['go']['main']['App']['GetServiceStatus'](arg1);
 }
 
+export function GetServiceVersions(arg1) {
+  return window['go']['main']['App']['GetServiceVersions'](arg1);
+}
+
 export function GetSystemInfo() {
   return window['go']['main']['App']['GetSystemInfo']();
+}
+
+export function SetServiceVersion(arg1, arg2) {
+  return window['go']['main']['App']['SetServiceVersion'](arg1, arg2);
 }
 
 export function StartService(arg1) {

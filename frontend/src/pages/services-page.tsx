@@ -10,8 +10,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ServiceTable, useServices } from '@/features/services';
-import { useLogs } from '@/features/logs';
+import { ServiceTable, useServices } from '@/modules/service';
+import { useLogs } from '@/modules/log';
 
 /**
  * Services management page
@@ -52,47 +52,46 @@ export function ServicesPage() {
     <div className='flex flex-col gap-4'>
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-border/70 bg-card/95">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Services</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-2xl font-semibold tracking-tight">{stats.total}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-border/70 bg-card/95">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <div className="text-2xl font-semibold tracking-tight text-emerald-600">{stats.active}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-border/70 bg-card/95">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Inactive</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-600">{stats.inactive}</div>
+            <div className="text-2xl font-semibold tracking-tight text-slate-600">{stats.inactive}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Services Table */}
-      <Card>
+      <Card className="border-border/70 bg-card/95">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle>Service Management</CardTitle>
-          <Badge variant="outline" className="flex items-center gap-1 bg-green-50 text-green-700 border-green-200">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-            </span>
-            Real-time
+          <div>
+            <CardTitle className="text-base md:text-lg">Service Management</CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">Start, stop, and review status instantly.</p>
+          </div>
+          <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+            Live
           </Badge>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">Loading services...</div>
+            <div className="py-8 text-center text-sm text-muted-foreground">Loading services...</div>
           ) : (
             <ServiceTable 
               services={services}

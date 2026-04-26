@@ -1,26 +1,19 @@
-export namespace domain {
+export namespace service {
 	
-	export class ServiceStatus {
-	    name: string;
-	    isRunning: boolean;
-	    message: string;
+	export class Config {
+	    DisplayName: string;
+	    ServiceName: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new ServiceStatus(source);
+	        return new Config(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.isRunning = source["isRunning"];
-	        this.message = source["message"];
+	        this.DisplayName = source["DisplayName"];
+	        this.ServiceName = source["ServiceName"];
 	    }
 	}
-
-}
-
-export namespace main {
-	
 	export class LogMessage {
 	    timestamp: string;
 	    level: string;
@@ -37,22 +30,20 @@ export namespace main {
 	        this.message = source["message"];
 	    }
 	}
-	export class ServiceConfig {
-	    DisplayName: string;
-	    Linux: string;
-	    Darwin: string;
-	    Windows: string;
+	export class Status {
+	    name: string;
+	    isRunning: boolean;
+	    message: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new ServiceConfig(source);
+	        return new Status(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.DisplayName = source["DisplayName"];
-	        this.Linux = source["Linux"];
-	        this.Darwin = source["Darwin"];
-	        this.Windows = source["Windows"];
+	        this.name = source["name"];
+	        this.isRunning = source["isRunning"];
+	        this.message = source["message"];
 	    }
 	}
 

@@ -7,11 +7,11 @@
 
 ## ✨ Features
 
-- 🎛️ **Service Management** - Start/Stop Apache, MySQL, and more with toggle switches
+- 🎛️ **Service Management** - Start/Stop local services with toggle switches
 - 📊 **Real-time Monitoring** - Auto-refresh service status every 5 seconds
 - 📝 **Integrated Logging** - Color-coded logs with timestamps and log levels
 - 🎨 **Modern UI** - Built with shadcn/ui components and Tailwind CSS
-- 🖥️ **Cross-platform** - Supports Linux (systemctl), macOS (brew), Windows (net)
+- 🧱 **Isolated Runtime** - Services run from app-managed `runtime/` binaries and configs
 - ⚡ **Fast & Lightweight** - Native performance with Go backend and React frontend
 
 ## 🚀 Quick Start
@@ -37,19 +37,20 @@ chmod +x dev.sh test-services.sh
 ./dev.sh
 ```
 
-### Setup Permissions (Linux)
+### Runtime Isolation (Linux)
 
-For passwordless service management on Linux:
+LocalValet now uses app-isolated runtimes defined by `config/runtime.json`.
 
 ```bash
-sudo visudo
-
-# Add these lines (replace 'username' with your username):
-username ALL=(ALL) NOPASSWD: /bin/systemctl start *
-username ALL=(ALL) NOPASSWD: /bin/systemctl stop *
-username ALL=(ALL) NOPASSWD: /bin/systemctl status *
-username ALL=(ALL) NOPASSWD: /bin/systemctl is-active *
+config/runtime.json
+runtime/linux/php/8.2/
+runtime/linux/php/8.3/
+runtime/pids/
+runtime/logs/
 ```
+
+To switch PHP version, update `activeVersion` for `php-fpm` in `config/runtime.json`
+or use Settings page in the app.
 
 ### Test Services
 
@@ -66,13 +67,14 @@ username ALL=(ALL) NOPASSWD: /bin/systemctl is-active *
 
 ## 🎯 Supported Services
 
-| Service    | Linux        | macOS      | Windows    |
-| ---------- | ------------ | ---------- | ---------- |
-| Apache     | apache2      | httpd      | Apache2.4  |
-| MySQL      | mysql        | mysql      | MySQL80    |
-| PostgreSQL | postgresql   | postgresql | PostgreSQL |
-| Redis      | redis-server | redis      | Redis      |
-| Nginx      | nginx        | nginx      | nginx      |
+| Service    | Canonical Key |
+| ---------- | ------------- |
+| Apache     | apache        |
+| MySQL      | mysql         |
+| PostgreSQL | postgresql    |
+| Redis      | redis         |
+| Nginx      | nginx         |
+| PHP-FPM    | php-fpm       |
 
 ## 🏗️ Architecture
 
@@ -134,17 +136,11 @@ wails generate module
 # Or restart: wails dev
 ```
 
-### Permission Denied (Linux)
-
-```bash
-# Setup sudoers (see Setup Permissions above)
-```
-
 ### Service Not Starting
 
-1. Check service name matches your OS
-2. Check logs in UI for error details
-3. Test manually: `sudo systemctl status apache2`
+1. Ensure binary paths in `config/runtime.json` exist
+2. Check logs in `runtime/logs/`
+3. Verify active version and runtime config for the service
 
 ## 📧 Contact
 

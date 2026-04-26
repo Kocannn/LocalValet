@@ -1,12 +1,12 @@
 package platform
 
 import (
-	"LocalValet/internal/platform/domain"
+	servicedomain "LocalValet/internal/domain/service"
 	"LocalValet/internal/platform/linux"
 	"runtime"
 )
 
-func NewServiceManager() domain.ServiceManager {
+func NewServiceManager() servicedomain.Manager {
 	switch runtime.GOOS {
 	case "linux":
 		return linux.New()

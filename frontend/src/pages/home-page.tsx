@@ -10,9 +10,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ServiceTable } from '@/features/services';
-import { LogViewer, useLogs, type LogEntry } from '@/features/logs';
-import { useServices } from '@/features/services';
+import { ServiceTable, useServices } from '@/modules/service';
+import { LogViewer, useLogs } from '@/modules/log';
 
 /**
  * Home dashboard page
@@ -46,20 +45,19 @@ export function HomePage() {
     <div className='flex flex-col gap-4 flex-1 min-h-0 overflow-hidden'>
       {/* Services Section */}
       <div className="w-full">
-        <Card>
+        <Card className="border-border/70 bg-card/95">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>Server Modules</CardTitle>
-            <Badge variant="outline" className="flex items-center gap-1 bg-green-50 text-green-700 border-green-200">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-              </span>
-              Real-time
+            <div>
+              <CardTitle className="text-base md:text-lg">Server Modules</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">Monitor and control your local services.</p>
+            </div>
+            <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+              Live
             </Badge>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8">Loading services...</div>
+              <div className="py-8 text-center text-sm text-muted-foreground">Loading services...</div>
             ) : (
               <ServiceTable 
                 services={services}

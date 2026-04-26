@@ -1,11 +1,12 @@
 package main
 
 import (
+	servicedomain "LocalValet/internal/domain/service"
+	servicemonitor "LocalValet/internal/infrastructure/monitor"
 	"LocalValet/internal/platform"
-	"LocalValet/internal/platform/domain"
-	servicemonitor "LocalValet/internal/service_monitor"
+	serviceusecase "LocalValet/internal/usecase/service"
+	systemusecase "LocalValet/internal/usecase/system"
 	"context"
-	"fmt"
 	"runtime"
 	"time"
 
@@ -15,25 +16,26 @@ import (
 // App struct
 type App struct {
 	ctx               context.Context
-	monitoringActive  bool
+	serviceManager    servicedomain.Manager
+	serviceUC         *serviceusecase.UseCase
+	systemUC          *systemusecase.UseCase
 	servicesToMonitor []string
-
-	serviceManager domain.ServiceManager
-	monitor        *servicemonitor.ServiceMonitor
-	emitter        servicemonitor.EventEmitter
+	monitor           *servicemonitor.ServiceMonitor
+	emitter           servicemonitor.EventEmitter
 }
 
 // LogMessage represents a log entry
-type LogMessage struct {
-	Timestamp string `json:"timestamp"`
-	Level     string `json:"level"`
-	Message   string `json:"message"`
-}
+type LogMessage = serviceusecase.LogMessage
 
 // NewApp creates a new App application struct
 func NewApp() *App {
+	configs := servicedomain.DefaultConfigs()
+	manager := platform.NewServiceManager()
+
 	return &App{
-		serviceManager: platform.NewServiceManager(),
+		serviceManager: manager,
+		serviceUC:      serviceusecase.New(manager, configs),
+		systemUC:       systemusecase.New(),
 	}
 }
 
@@ -42,15 +44,7 @@ func NewApp() *App {
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	a.monitoringActive = true
-
-	configs := GetServiceConfigs()
-	a.servicesToMonitor = make([]string, 0, len(configs))
-
-	for _, config := range configs {
-		serviceName := GetServiceName(config.DisplayName)
-		a.servicesToMonitor = append(a.servicesToMonitor, serviceName)
-	}
+	a.servicesToMonitor = a.serviceUC.ServiceNames()
 
 	// Create emitter
 	a.emitter = servicemonitor.NewEventEmitter(ctx)
@@ -66,111 +60,48 @@ func (a *App) startup(ctx context.Context) {
 	go a.monitor.Start(ctx)
 
 	// Startup log
-	binarySource := "system binaries"
-	if runtime.GOOS == "windows" {
-		binarySource = "custom binaries (bin/windows/)"
-	}
-
-	a.emitter.Emit("service:log", LogMessage{
-		Timestamp: time.Now().Format("15:04:05"),
-		Level:     "info",
-		Message:   fmt.Sprintf("LocalValet started on %s using %s", runtime.GOOS, binarySource),
-	})
+	binarySource := "isolated runtime (runtime/)"
+	a.emitter.Emit("service:log", a.serviceUC.StartupLog(runtime.GOOS, binarySource))
 }
 
 // GetServiceStatus checks if a service is running
-func (a *App) GetServiceStatus(serviceName string) domain.ServiceStatus {
-	isRunning, msg := a.serviceManager.GetServiceStatus(serviceName)
-
-	return domain.ServiceStatus{
-		Name:      serviceName,
-		IsRunning: isRunning,
-		Message:   msg,
-	}
+func (a *App) GetServiceStatus(serviceName string) servicedomain.Status {
+	return a.serviceUC.GetServiceStatus(serviceName)
 }
 
 // StartService starts a service
 func (a *App) StartService(serviceName string) LogMessage {
-
-	err := a.serviceManager.StartService(serviceName)
-	timestamp := time.Now().Format("15:04:05")
-
-	if err != nil {
-		return LogMessage{
-			Timestamp: timestamp,
-			Level:     "error",
-			Message:   fmt.Sprintf("Failed to start %s: %v", serviceName, err),
-		}
-	}
-
-	return LogMessage{
-		Timestamp: timestamp,
-		Level:     "success",
-		Message:   fmt.Sprintf("%s started successfully", serviceName),
-	}
+	return a.serviceUC.StartService(serviceName)
 }
 
 // StopService stops a service
 func (a *App) StopService(serviceName string) LogMessage {
-
-	timestamp := time.Now().Format("15:04:05")
-	err := a.serviceManager.StopService(serviceName)
-
-	if err != nil {
-		return LogMessage{
-			Timestamp: timestamp,
-			Level:     "error",
-			Message:   fmt.Sprintf("Failed to stop %s: %v", serviceName, err),
-		}
-	}
-
-	return LogMessage{
-		Timestamp: timestamp,
-		Level:     "success",
-		Message:   fmt.Sprintf("%s stopped successfully", serviceName),
-	}
+	return a.serviceUC.StopService(serviceName)
 }
 
 // ToggleService toggles a service on/off
 func (a *App) ToggleService(serviceName string, shouldStart bool) LogMessage {
-	var logMsg LogMessage
+	logMsg := a.serviceUC.ToggleService(serviceName, shouldStart)
 
-	// 1. Eksekusi perintah Start/Stop (Blocking operation)
-	if shouldStart {
-		logMsg = a.StartService(serviceName)
-	} else {
-		logMsg = a.StopService(serviceName)
-	}
-
-	// 2. Emit log hasil eksekusi (Berhasil/Gagal mengirim perintah)
 	wailsRuntime.EventsEmit(a.ctx, "service:log", logMsg)
 
-	// 3. FIX: Gunakan Goroutine dengan Polling Smart, bukan Sleep buta
 	go func() {
-		// Kita beri batas waktu maksimal 5 detik untuk status berubah.
-		// Jika lebih dari 5 detik, kita menyerah (mencegah infinite loop).
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// Cek setiap 200 milidetik
 		ticker := time.NewTicker(200 * time.Millisecond)
 		defer ticker.Stop()
 
 		for {
 			select {
 			case <-ctx.Done():
-				// Kasus A: Waktu habis (Timeout 5 detik tercapai)
-				// Kirim status terakhir apa adanya, meski mungkin belum berubah.
 				finalStatus := a.GetServiceStatus(serviceName)
 				wailsRuntime.EventsEmit(a.ctx, "service:status-changed", finalStatus)
 				return
 
 			case <-ticker.C:
-				// Kasus B: Saatnya mengecek (setiap 200ms)
 				currentStatus := a.GetServiceStatus(serviceName)
 
-				// Jika status servicenya SUDAH sesuai dengan keinginan user (shouldStart),
-				// maka kita kirim update ke UI dan hentikan loop ini segera.
 				if currentStatus.IsRunning == shouldStart {
 					wailsRuntime.EventsEmit(a.ctx, "service:status-changed", currentStatus)
 					return
@@ -183,31 +114,30 @@ func (a *App) ToggleService(serviceName string, shouldStart bool) LogMessage {
 }
 
 // GetAllServicesStatus returns status for all monitored services (for initial load)
-func (a *App) GetAllServicesStatus() []domain.ServiceStatus {
-	statuses := make([]domain.ServiceStatus, 0, len(a.servicesToMonitor))
-
-	for _, serviceName := range a.servicesToMonitor {
-		status := a.GetServiceStatus(serviceName)
-		statuses = append(statuses, status)
-	}
-
-	return statuses
+func (a *App) GetAllServicesStatus() []servicedomain.Status {
+	return a.serviceUC.GetAllServicesStatus(a.servicesToMonitor)
 }
 
 // GetBinarySourceInfo returns information about where binaries are executed from
 func (a *App) GetBinarySourceInfo() map[string]interface{} {
-	info := make(map[string]interface{})
+	return a.systemUC.GetBinarySourceInfo(IsUsingSystemBinaries(), "runtime/")
+}
 
-	info["os"] = runtime.GOOS
-	info["using_system_binaries"] = IsUsingSystemBinaries()
+// GetServiceVersions returns available versions for a service runtime.
+func (a *App) GetServiceVersions(serviceName string) []string {
+	return a.serviceUC.GetServiceVersions(serviceName)
+}
 
-	if runtime.GOOS == "windows" {
-		info["binary_location"] = "bin/windows/"
-		info["binary_validation"] = ValidateWindowsBinaries()
-	} else {
-		info["binary_location"] = "system"
-		info["binary_validation"] = nil
+// GetActiveServiceVersion returns active runtime version for a service.
+func (a *App) GetActiveServiceVersion(serviceName string) string {
+	return a.serviceUC.GetActiveServiceVersion(serviceName)
+}
+
+// SetServiceVersion updates active runtime version for a service.
+func (a *App) SetServiceVersion(serviceName, version string) LogMessage {
+	msg := a.serviceUC.SetServiceVersion(serviceName, version)
+	if msg.Level == "success" {
+		wailsRuntime.EventsEmit(a.ctx, "service:log", msg)
 	}
-
-	return info
+	return msg
 }
