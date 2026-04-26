@@ -3,10 +3,13 @@ package main
 import (
 	servicedomain "LocalValet/internal/domain/service"
 	servicemonitor "LocalValet/internal/infrastructure/monitor"
+	terminalinfra "LocalValet/internal/infrastructure/terminal"
 	"LocalValet/internal/platform"
 	serviceusecase "LocalValet/internal/usecase/service"
 	systemusecase "LocalValet/internal/usecase/system"
+	terminalusecase "LocalValet/internal/usecase/terminal"
 	"context"
+	"log"
 	"runtime"
 	"time"
 
@@ -19,6 +22,7 @@ type App struct {
 	serviceManager    servicedomain.Manager
 	serviceUC         *serviceusecase.UseCase
 	systemUC          *systemusecase.UseCase
+	terminalUC        *terminalusecase.UseCase
 	servicesToMonitor []string
 	monitor           *servicemonitor.ServiceMonitor
 	emitter           servicemonitor.EventEmitter
@@ -36,6 +40,7 @@ func NewApp() *App {
 		serviceManager: manager,
 		serviceUC:      serviceusecase.New(manager, configs),
 		systemUC:       systemusecase.New(),
+		terminalUC:     terminalusecase.New(terminalinfra.NewLinuxManager()),
 	}
 }
 
@@ -125,7 +130,29 @@ func (a *App) GetBinarySourceInfo() map[string]interface{} {
 
 // GetServiceVersions returns available versions for a service runtime.
 func (a *App) GetServiceVersions(serviceName string) []string {
-	return a.serviceUC.GetServiceVersions(serviceName)
+	versions, err := a.serviceUC.GetServiceVersionsWithError(serviceName)
+	if err != nil {
+		log.Printf("[versions] failed to fetch versions for %s: %v", serviceName, err)
+		if a.emitter != nil {
+			a.emitter.Emit("service:log", LogMessage{
+				Timestamp: time.Now().Format("15:04:05"),
+				Level:     "warning",
+				Message:   "Failed to fetch versions for " + serviceName + ": " + err.Error(),
+			})
+		}
+		return []string{}
+	}
+
+	log.Printf("[versions] fetched %d versions for %s: %v", len(versions), serviceName, versions)
+	if a.emitter != nil {
+		a.emitter.Emit("service:log", LogMessage{
+			Timestamp: time.Now().Format("15:04:05"),
+			Level:     "info",
+			Message:   "Fetched versions for " + serviceName + ": " + formatVersions(versions),
+		})
+	}
+
+	return versions
 }
 
 // GetActiveServiceVersion returns active runtime version for a service.
@@ -140,4 +167,27 @@ func (a *App) SetServiceVersion(serviceName, version string) LogMessage {
 		wailsRuntime.EventsEmit(a.ctx, "service:log", msg)
 	}
 	return msg
+}
+
+// OpenContextTerminal launches a new terminal window with runtime-injected environment.
+// projectDir may be empty; in that case the user's home directory is used.
+func (a *App) OpenContextTerminal(projectDir string) LogMessage {
+	msg := a.terminalUC.OpenContextTerminal(projectDir, "")
+	if a.emitter != nil {
+		a.emitter.Emit("service:log", msg)
+	}
+	return LogMessage(msg)
+}
+
+func formatVersions(versions []string) string {
+	if len(versions) == 0 {
+		return "(none)"
+	}
+
+	result := versions[0]
+	for i := 1; i < len(versions); i++ {
+		result += ", " + versions[i]
+	}
+
+	return result
 }
