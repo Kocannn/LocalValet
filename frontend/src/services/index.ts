@@ -6,4 +6,5 @@
 
 export * from './wails-service-control.service';
 export * from './wails-runtime-settings.service';
+export * from './wails-terminal.service';
 export * from './events.service';

@@ -117,6 +117,10 @@ func (u *UseCase) GetServiceVersions(serviceName string) []string {
 	return versions
 }
 
+func (u *UseCase) GetServiceVersionsWithError(serviceName string) ([]string, error) {
+	return u.manager.GetAvailableVersions(serviceName)
+}
+
 func (u *UseCase) GetActiveServiceVersion(serviceName string) string {
 	version, err := u.manager.GetActiveServiceVersion(serviceName)
 	if err != nil {

@@ -10,7 +10,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { PhpRuntimeSelector, usePhpRuntimeSettings } from '@/modules/settings';
+import { openContextTerminal } from '@/services';
 
 /**
  * Settings page
@@ -24,6 +26,14 @@ export function SettingsPage() {
     error,
     changeVersion,
   } = usePhpRuntimeSettings();
+
+  const handleOpenTerminal = async () => {
+    try {
+      await openContextTerminal('');
+    } catch (error) {
+      console.error('Failed to open terminal:', error);
+    }
+  };
 
   return (
     <div className='flex flex-col gap-4'>
@@ -77,6 +87,13 @@ export function SettingsPage() {
               error={error}
               onChange={changeVersion}
             />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleOpenTerminal}
+            >
+              Open Context Terminal
+            </Button>
           </CardContent>
         </Card>
 

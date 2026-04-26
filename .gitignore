@@ -2,3 +2,15 @@ build/bin
 node_modules
 frontend/dist
 .codex
+
+runtime/linux/**/*
+runtime/logs/**/*
+runtime/pids/**/*
+
+!runtime/linux/**/
+!runtime/logs/**/
+!runtime/pids/**/
+
+!runtime/linux/**/.gitkeep
+!runtime/logs/**/.gitkeep
+!runtime/pids/**/.gitkeep

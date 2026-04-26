@@ -3,6 +3,7 @@ package linux
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -161,13 +162,17 @@ func (r *RuntimeRegistry) GetActiveVersion(serviceName string) (string, error) {
 }
 
 func (r *RuntimeRegistry) GetVersions(serviceName string) ([]string, error) {
+	log.Printf("[runtime_registry] GetVersions requested for service=%s config=%s", serviceName, r.configPath())
+
 	cfg, err := r.loadConfig()
 	if err != nil {
+		log.Printf("[runtime_registry] failed loading config for service=%s: %v", serviceName, err)
 		return nil, err
 	}
 
 	svc, ok := cfg.Services[serviceName]
 	if !ok {
+		log.Printf("[runtime_registry] service=%s not configured. available=%v", serviceName, mapKeys(cfg.Services))
 		return nil, fmt.Errorf("service %q is not configured", serviceName)
 	}
 
@@ -176,6 +181,13 @@ func (r *RuntimeRegistry) GetVersions(serviceName string) ([]string, error) {
 		versions = append(versions, version)
 	}
 	sort.Strings(versions)
+
+	if len(versions) == 0 {
+		log.Printf("[runtime_registry] service=%s configured but has no versions in runtime config", serviceName)
+	} else {
+		log.Printf("[runtime_registry] service=%s resolved versions=%v active=%s", serviceName, versions, svc.ActiveVersion)
+	}
+
 	return versions, nil
 }
 
@@ -273,4 +285,12 @@ func resolvePath(baseDir, value string) string {
 	}
 
 	return filepath.Join(baseDir, filepath.FromSlash(value))
+}
+
+func mapKeys[K comparable, V any](m map[K]V) []K {
+	keys := make([]K, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }

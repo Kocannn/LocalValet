@@ -34,6 +34,10 @@ export function GetSystemInfo() {
   return window['go']['main']['App']['GetSystemInfo']();
 }
 
+export function OpenContextTerminal(arg1) {
+  return window['go']['main']['App']['OpenContextTerminal'](arg1);
+}
+
 export function SetServiceVersion(arg1, arg2) {
   return window['go']['main']['App']['SetServiceVersion'](arg1, arg2);
 }
