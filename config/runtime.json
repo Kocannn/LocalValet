@@ -44,6 +44,7 @@
     },
     "php-fpm": {
       "activeVersion": "8.4",
+      "versions": {
         "8.4": {
           "binary": "runtime/linux/php/8.4/sbin/php-fpm",
           "args": [
