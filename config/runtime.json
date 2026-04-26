@@ -1,0 +1,72 @@
+{
+  "services": {
+    "apache": {
+      "activeVersion": "2.4",
+      "versions": {
+        "2.4": {
+          "binary": "runtime/linux/apache/2.4/bin/httpd",
+          "args": [
+            "-DFOREGROUND"
+          ],
+          "workingDir": "runtime/linux/apache/2.4"
+        }
+      }
+    },
+    "mysql": {
+      "activeVersion": "8.0",
+      "versions": {
+        "8.0": {
+          "binary": "runtime/linux/mysql/8.0/bin/mysqld",
+          "args": [],
+          "workingDir": "runtime/linux/mysql/8.0"
+        }
+      }
+    },
+    "postgresql": {
+      "activeVersion": "16",
+      "versions": {
+        "16": {
+          "binary": "runtime/linux/postgresql/16/bin/postgres",
+          "args": [],
+          "workingDir": "runtime/linux/postgresql/16"
+        }
+      }
+    },
+    "redis": {
+      "activeVersion": "7",
+      "versions": {
+        "7": {
+          "binary": "runtime/linux/redis/7/bin/redis-server",
+          "args": [],
+          "workingDir": "runtime/linux/redis/7"
+        }
+      }
+    },
+    "php-fpm": {
+      "activeVersion": "8.4",
+        "8.4": {
+          "binary": "runtime/linux/php/8.4/sbin/php-fpm",
+          "args": [
+            "--nodaemonize",
+            "--fpm-config",
+            "runtime/linux/php/8.4/etc/php-fpm.conf"
+          ],
+          "workingDir": "runtime/linux/php/8.4"
+        }
+      }
+    },
+    "nginx": {
+      "activeVersion": "1.26",
+      "versions": {
+        "1.26": {
+          "binary": "runtime/linux/nginx/1.26/sbin/nginx",
+          "args": [
+            "-g",
+            "daemon off;"
+          ],
+          "workingDir": "runtime/linux/nginx/1.26"
+        }
+      }
+    }
+  }
+}

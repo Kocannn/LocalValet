@@ -10,18 +10,28 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { PhpRuntimeSelector, usePhpRuntimeSettings } from '@/modules/settings';
 
 /**
  * Settings page
  */
 export function SettingsPage() {
+  const {
+    versions,
+    label,
+    isLoading,
+    isSaving,
+    error,
+    changeVersion,
+  } = usePhpRuntimeSettings();
+
   return (
     <div className='flex flex-col gap-4'>
-      <Card>
+      <Card className="border-border/70 bg-card/95">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Settings</CardTitle>
+              <CardTitle className="text-base md:text-lg">Settings</CardTitle>
               <CardDescription>
                 Configure your LocalValet application
               </CardDescription>
@@ -30,16 +40,16 @@ export function SettingsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12 text-muted-foreground">
-            <p className="text-lg mb-2">🚧 Under Construction</p>
-            <p>Settings functionality will be available in a future update.</p>
+          <div className="py-10 text-center text-muted-foreground">
+            <p className="text-lg font-medium tracking-tight">Settings module is in progress.</p>
+            <p className="mt-2 text-sm">Configuration options will be available in a future update.</p>
           </div>
         </CardContent>
       </Card>
 
       {/* Placeholder for future settings sections */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="border-border/70 bg-card/95">
           <CardHeader>
             <CardTitle className="text-base">General</CardTitle>
             <CardDescription>
@@ -51,19 +61,26 @@ export function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/70 bg-card/95">
           <CardHeader>
             <CardTitle className="text-base">Services</CardTitle>
             <CardDescription>
-              Default service configurations
+              Isolated runtime and service versions
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Coming soon...</p>
+          <CardContent className="space-y-3">
+            <PhpRuntimeSelector
+              versions={versions}
+              label={label}
+              isLoading={isLoading}
+              isSaving={isSaving}
+              error={error}
+              onChange={changeVersion}
+            />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/70 bg-card/95">
           <CardHeader>
             <CardTitle className="text-base">Notifications</CardTitle>
             <CardDescription>
@@ -75,7 +92,7 @@ export function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/70 bg-card/95">
           <CardHeader>
             <CardTitle className="text-base">Advanced</CardTitle>
             <CardDescription>

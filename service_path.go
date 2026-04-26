@@ -122,7 +122,7 @@ func GetServiceWorkingDirectory(displayName string) string {
 
 // IsUsingSystemBinaries returns true if the OS uses system binaries
 func IsUsingSystemBinaries() bool {
-	return runtime.GOOS != "windows"
+	return false
 }
 
 // ValidateWindowsBinaries checks if all required Windows binaries exist
