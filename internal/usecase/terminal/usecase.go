@@ -21,7 +21,7 @@ func New(manager terminaldomain.Manager) *UseCase {
 	return &UseCase{manager: manager}
 }
 
-func (u *UseCase) OpenContextTerminal(projectDir string, preferredTerminal string) LogMessage {
+func (u *UseCase) LaunchTerminal(projectDir string, preferredTerminal string) LogMessage {
 	now := time.Now().Format("15:04:05")
 	if runtime.GOOS != "linux" {
 		return LogMessage{
@@ -48,4 +48,8 @@ func (u *UseCase) OpenContextTerminal(projectDir string, preferredTerminal strin
 		Level:     "success",
 		Message:   fmt.Sprintf("Terminal opened with %s in %s", result.Terminal, result.WorkDir),
 	}
+}
+
+func (u *UseCase) OpenContextTerminal(projectDir string, preferredTerminal string) LogMessage {
+	return u.LaunchTerminal(projectDir, preferredTerminal)
 }
