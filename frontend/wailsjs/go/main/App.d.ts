@@ -18,6 +18,8 @@ export function GetServiceVersions(arg1:string):Promise<Array<string>>;
 
 export function GetSystemInfo():Promise<Record<string, string>>;
 
+export function LaunchTerminal(arg1:string):Promise<service.LogMessage>;
+
 export function OpenContextTerminal(arg1:string):Promise<service.LogMessage>;
 
 export function SetServiceVersion(arg1:string,arg2:string):Promise<service.LogMessage>;

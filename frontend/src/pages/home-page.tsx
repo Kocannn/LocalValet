@@ -10,8 +10,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ServiceTable, useServices } from '@/modules/service';
 import { LogViewer, useLogs } from '@/modules/log';
+import { openContextTerminal } from '@/services';
 
 /**
  * Home dashboard page
@@ -41,6 +43,14 @@ export function HomePage() {
     }
   };
 
+  const handleOpenContextTerminal = async () => {
+    try {
+      await openContextTerminal('');
+    } catch (error) {
+      console.error('Failed to open context terminal:', error);
+    }
+  };
+
   return (
     <div className='flex flex-col gap-4 flex-1 min-h-0 overflow-hidden'>
       {/* Services Section */}
@@ -64,6 +74,23 @@ export function HomePage() {
                 onServiceToggle={handleServiceToggle}
               />
             )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Context Terminal Section */}
+      <div className="w-full">
+        <Card className="border-border/70 bg-card/95">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base md:text-lg">Context Terminal</CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Open a terminal with the LocalValet runtime environment.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full sm:w-auto" onClick={handleOpenContextTerminal}>
+              Open Context Terminal
+            </Button>
           </CardContent>
         </Card>
       </div>
