@@ -34,10 +34,6 @@ export function GetSystemInfo() {
   return window['go']['main']['App']['GetSystemInfo']();
 }
 
-export function LaunchTerminal(arg1) {
-  return window['go']['main']['App']['LaunchTerminal'](arg1);
-}
-
 export function OpenContextTerminal(arg1) {
   return window['go']['main']['App']['OpenContextTerminal'](arg1);
 }

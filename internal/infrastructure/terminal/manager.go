@@ -303,6 +303,9 @@ func buildInjectedEnv(baseDir string, cfg *runtimeConfig) ([]string, map[string]
 		}
 		binaryAbs := resolvePath(baseDir, version.Binary)
 		addPath(filepath.Dir(binaryAbs))
+		if serviceName == "php-fpm" {
+			addPath(filepath.Join(filepath.Dir(filepath.Dir(binaryAbs)), "bin"))
+		}
 		return version
 	}
 
@@ -362,6 +365,15 @@ func buildAppEnvironment(baseDir, workDir string, paths []string, envMap map[str
 		homeDir = workDir
 	}
 
+	allowedSessionKeys := []string{
+		"DISPLAY",
+		"WAYLAND_DISPLAY",
+		"XDG_RUNTIME_DIR",
+		"XAUTHORITY",
+		"DBUS_SESSION_BUS_ADDRESS",
+		"XDG_SESSION_TYPE",
+	}
+
 	pathParts := append([]string{}, paths...)
 	pathParts = append(pathParts,
 		"/usr/local/sbin",
@@ -384,6 +396,12 @@ func buildAppEnvironment(baseDir, workDir string, paths []string, envMap map[str
 		"LC_ALL":              "en_US.UTF-8",
 		"LOCALVALET_BASE_DIR": baseDir,
 		"LOCALVALET_HOME":     homeDir,
+	}
+
+	for _, key := range allowedSessionKeys {
+		if value := os.Getenv(key); value != "" {
+			env[key] = value
+		}
 	}
 
 	for key, value := range envMap {
