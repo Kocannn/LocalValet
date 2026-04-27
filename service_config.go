@@ -17,5 +17,5 @@ func GetServiceName(displayName string) string {
 
 // GetAvailableServices returns list of services for frontend
 func (a *App) GetAvailableServices() []ServiceConfig {
-	return GetServiceConfigs()
+	return a.controller.GetAvailableServices()
 }
