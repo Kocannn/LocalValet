@@ -2,6 +2,10 @@ build/bin
 node_modules
 frontend/dist
 .codex
+.agents
+.claude
+.github
+CLAUDE.md
 
 runtime/linux/**/*
 runtime/logs/**/*
