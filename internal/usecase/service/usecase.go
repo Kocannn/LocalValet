@@ -47,10 +47,25 @@ func (u *UseCase) StartupLog(goos string, binarySource string) LogMessage {
 
 func (u *UseCase) GetServiceStatus(serviceName string) servicedomain.Status {
 	isRunning, msg := u.manager.GetServiceStatus(serviceName)
+	healthy, _ := u.manager.CheckHealth(serviceName)
+	port := u.manager.GetAllocatedPort(serviceName)
+
+	cfg, hasCfg := servicedomain.GetConfig(serviceName, u.configs)
+	category := ""
+	if hasCfg {
+		category = cfg.Category
+		if port == 0 && isRunning {
+			port = cfg.DefaultPort
+		}
+	}
+
 	return servicedomain.Status{
 		Name:      serviceName,
 		IsRunning: isRunning,
 		Message:   msg,
+		Port:      port,
+		Healthy:   healthy,
+		Category:  category,
 	}
 }
 
@@ -63,9 +78,24 @@ func (u *UseCase) GetAllServicesStatus(serviceNames []string) []servicedomain.St
 }
 
 func (u *UseCase) StartService(serviceName string) LogMessage {
-	err := u.manager.StartService(serviceName)
 	timestamp := time.Now().Format("15:04:05")
 
+	// 1. Check and start dependencies first
+	deps := servicedomain.GetDependencies(serviceName, u.configs)
+	for _, dep := range deps {
+		if running, _ := u.manager.GetServiceStatus(dep); !running {
+			if err := u.manager.StartService(dep); err != nil {
+				return LogMessage{
+					Timestamp: timestamp,
+					Level:     "error",
+					Message:   fmt.Sprintf("Failed to start dependency %s for %s: %v", dep, serviceName, err),
+				}
+			}
+		}
+	}
+
+	// 2. Start the primary service
+	err := u.manager.StartService(serviceName)
 	if err != nil {
 		return LogMessage{
 			Timestamp: timestamp,
@@ -74,17 +104,23 @@ func (u *UseCase) StartService(serviceName string) LogMessage {
 		}
 	}
 
+	port := u.manager.GetAllocatedPort(serviceName)
+	msg := fmt.Sprintf("%s started successfully", serviceName)
+	if port > 0 {
+		msg = fmt.Sprintf("%s started successfully on port %d", serviceName, port)
+	}
+
 	return LogMessage{
 		Timestamp: timestamp,
 		Level:     "success",
-		Message:   fmt.Sprintf("%s started successfully", serviceName),
+		Message:   msg,
 	}
 }
 
 func (u *UseCase) StopService(serviceName string) LogMessage {
-	err := u.manager.StopService(serviceName)
 	timestamp := time.Now().Format("15:04:05")
 
+	err := u.manager.StopService(serviceName)
 	if err != nil {
 		return LogMessage{
 			Timestamp: timestamp,
@@ -97,6 +133,24 @@ func (u *UseCase) StopService(serviceName string) LogMessage {
 		Timestamp: timestamp,
 		Level:     "success",
 		Message:   fmt.Sprintf("%s stopped successfully", serviceName),
+	}
+}
+
+func (u *UseCase) CheckHealth(serviceName string) (bool, LogMessage) {
+	timestamp := time.Now().Format("15:04:05")
+	healthy, msg := u.manager.CheckHealth(serviceName)
+
+	level := "info"
+	if healthy {
+		level = "success"
+	} else {
+		level = "warning"
+	}
+
+	return healthy, LogMessage{
+		Timestamp: timestamp,
+		Level:     level,
+		Message:   msg,
 	}
 }
 

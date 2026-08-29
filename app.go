@@ -84,6 +84,13 @@ func (a *App) StopService(serviceName string) LogMessage {
 	return a.serviceUC.StopService(serviceName)
 }
 
+// CheckServiceHealth checks the health of a service
+func (a *App) CheckServiceHealth(serviceName string) LogMessage {
+	_, msg := a.serviceUC.CheckHealth(serviceName)
+	return msg
+}
+
+
 // ToggleService toggles a service on/off
 func (a *App) ToggleService(serviceName string, shouldStart bool) LogMessage {
 	logMsg := a.serviceUC.ToggleService(serviceName, shouldStart)
