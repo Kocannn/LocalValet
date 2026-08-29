@@ -32,13 +32,18 @@ export function useServices(): UseServicesReturn {
         );
 
         setServices(
-          configs.map((config) => ({
-            name: config.displayName,
-            serviceName: config.serviceName,
-            isRunning: statusMap.get(config.serviceName)?.isRunning ?? false,
-            isLoading: false,
-          })),
+          configs.map((config: any) => {
+            const name = config.displayName || config.DisplayName || config.serviceName || config.ServiceName || '';
+            const serviceName = config.serviceName || config.ServiceName || '';
+            return {
+              name,
+              serviceName,
+              isRunning: statusMap.get(serviceName)?.isRunning ?? false,
+              isLoading: false,
+            };
+          }),
         );
+
       } catch (error) {
         console.error('Failed to load initial service status:', error);
       } finally {

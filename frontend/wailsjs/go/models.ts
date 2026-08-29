@@ -1,8 +1,12 @@
 export namespace service {
 	
 	export class Config {
-	    DisplayName: string;
-	    ServiceName: string;
+	    displayName: string;
+	    serviceName: string;
+	    defaultPort: number;
+	    category: string;
+	    dependencies: string[];
+	    healthCheckType: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -10,8 +14,12 @@ export namespace service {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.DisplayName = source["DisplayName"];
-	        this.ServiceName = source["ServiceName"];
+	        this.displayName = source["displayName"];
+	        this.serviceName = source["serviceName"];
+	        this.defaultPort = source["defaultPort"];
+	        this.category = source["category"];
+	        this.dependencies = source["dependencies"];
+	        this.healthCheckType = source["healthCheckType"];
 	    }
 	}
 	export class LogMessage {
@@ -34,6 +42,9 @@ export namespace service {
 	    name: string;
 	    isRunning: boolean;
 	    message: string;
+	    port?: number;
+	    healthy?: boolean;
+	    category?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Status(source);
@@ -44,6 +55,9 @@ export namespace service {
 	        this.name = source["name"];
 	        this.isRunning = source["isRunning"];
 	        this.message = source["message"];
+	        this.port = source["port"];
+	        this.healthy = source["healthy"];
+	        this.category = source["category"];
 	    }
 	}
 

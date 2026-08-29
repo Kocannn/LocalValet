@@ -13,12 +13,12 @@
       }
     },
     "mysql": {
-      "activeVersion": "8.0",
+      "activeVersion": "12.2.2",
       "versions": {
-        "8.0": {
-          "binary": "runtime/linux/mysql/8.0/bin/mysqld",
+        "12.2.2": {
+          "binary": "runtime/linux/mysql/12.2.2/bin/mysqld",
           "args": [],
-          "workingDir": "runtime/linux/mysql/8.0"
+          "workingDir": "runtime/linux/mysql/12.2.2"
         }
       }
     },
