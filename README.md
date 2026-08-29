@@ -1,30 +1,37 @@
 # LocalValet 🚀
 
-> A modern desktop application for managing local development services (Apache, MySQL, etc.) built with Wails, React, TypeScript, and shadcn/ui.
+> A modern desktop application for managing local development services, inspired by Laragon. Built with Wails v2, React, and Go.
 
-![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-blue)
+![Platform](https://img.shields.io/badge/platform-Linux-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## ✨ Features
 
-- 🎛️ **Service Management** - Start/Stop local services with toggle switches
-- 📊 **Real-time Monitoring** - Auto-refresh service status every 5 seconds
-- 📝 **Integrated Logging** - Color-coded logs with timestamps and log levels
-- 🎨 **Modern UI** - Built with shadcn/ui components and Tailwind CSS
-- 🧱 **Isolated Runtime** - Services run from app-managed `runtime/` binaries and configs
-- ⚡ **Fast & Lightweight** - Native performance with Go backend and React frontend
+- 🎛️ **Service Management** — Start/Stop Apache, Nginx, MySQL, PostgreSQL, Redis, PHP-FPM
+- 🔄 **Version Switching** — Switch between PHP, Node.js versions instantly
+- 🌐 **Virtual Host Manager** — Auto-generate nginx configs for projects
+- 🔒 **SSL Certificates** — Local CA with one-click cert generation
+- 📁 **Project Discovery** — Auto-detect Laravel, WordPress, Next.js, etc.
+- 📊 **Real-time Monitoring** — Live status updates with adaptive polling
+- 📝 **Log Viewer** — Filterable logs with color-coded levels
+- 🖥️ **Integrated Terminal** — Context-aware terminal with injected PATH
+- 🌙 **Dark Mode** — System-aware theme switching
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- [Go](https://golang.org/) (1.18+)
-- [Node.js](https://nodejs.org/) (16+)
+- [Go](https://golang.org/) 1.23+
+- [Node.js](https://nodejs.org/) 18+
 - [Wails](https://wails.io/) v2
 
-### Installation & Run
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/Kocannn/LocalValet.git
+cd LocalValet
+
 # Install dependencies
 go mod download
 cd frontend && npm install && cd ..
@@ -32,126 +39,164 @@ cd frontend && npm install && cd ..
 # Run development server
 wails dev
 
-# Or use the helper script
-chmod +x dev.sh test-services.sh
-./dev.sh
-```
-
-### Runtime Isolation (Linux)
-
-LocalValet now uses app-isolated runtimes defined by `config/runtime.json`.
-
-```bash
-config/runtime.json
-runtime/linux/php/8.2/
-runtime/linux/php/8.3/
-runtime/pids/
-runtime/logs/
-```
-
-To switch PHP version, update `activeVersion` for `php-fpm` in `config/runtime.json`
-or use Settings page in the app.
-
-### Test Services
-
-```bash
-# Run service test script
-./test-services.sh
-```
-
-## 📚 Documentation
-
-- **[QUICKSTART.md](QUICKSTART.md)** - Get started quickly
-- **[SETUP.md](SETUP.md)** - Detailed setup instructions
-- **[IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md)** - Complete implementation guide
-
-## 🎯 Supported Services
-
-| Service    | Canonical Key |
-| ---------- | ------------- |
-| Apache     | apache        |
-| MySQL      | mysql         |
-| PostgreSQL | postgresql    |
-| Redis      | redis         |
-| Nginx      | nginx         |
-| PHP-FPM    | php-fpm       |
-
-## 🏗️ Architecture
-
-### Backend (Go)
-
-```
-app.go              # Main application logic
-├── GetServiceStatus()   # Check service status
-├── StartService()       # Start a service
-├── StopService()        # Stop a service
-└── ToggleService()      # Toggle service on/off
-
-service_utils.go    # Helper functions
-service_config.go   # Service configurations
-```
-
-### Frontend (React + TypeScript)
-
-```
-src/
-├── App.tsx                    # Main app with service management
-├── components/
-│   ├── app-layout.tsx         # Layout wrapper with sidebar
-│   ├── app-sidebar.tsx        # Navigation sidebar
-│   └── ui/                    # shadcn/ui components
-```
-
-## 🛠️ Development
-
-### Adding New Services
-
-Update `App.tsx`:
-
-```typescript
-const [modules, setModules] = useState<ServiceModule[]>([
-  {
-    name: "Apache",
-    serviceName: "apache2",
-    isRunning: false,
-    isLoading: false,
-  },
-  { name: "MySQL", serviceName: "mysql", isRunning: false, isLoading: false },
-  // Add new service here
-]);
-```
-
-### Build for Production
-
-```bash
+# Or build for production
 wails build
 ```
 
-## 🐛 Troubleshooting
+### First Run
 
-### Wails Bindings Not Found
+1. Launch LocalValet
+2. Services will auto-detect from `config/runtime.json`
+3. Use the toggle switches to start/stop services
+4. Check the log viewer for status updates
 
-```bash
-wails generate module
-# Or restart: wails dev
+## 📦 Supported Services
+
+| Service | Default Port | Version Management |
+|---------|--------------|-------------------|
+| Apache | 8080 | ✅ |
+| Nginx | 8080 | ✅ |
+| MySQL | 3306 | ✅ |
+| PostgreSQL | 5432 | ✅ |
+| Redis | 6379 | ✅ |
+| PHP-FPM | 9074 | ✅ |
+
+## 🏗️ Architecture
+
+```
+LocalValet/
+├── app.go                    # Main Wails app with bindings
+├── main.go                   # Entry point with OnBeforeClose
+├── config/
+│   ├── runtime.json          # Service versions config
+│   ├── vhosts.json           # Virtual host config
+│   └── ssl.json              # SSL certificates
+├── internal/
+│   ├── domain/               # Interfaces and types
+│   ├── usecase/              # Business logic
+│   ├── infrastructure/       # Monitor, terminal
+│   └── platform/             # OS-specific implementations
+├── runtime/
+│   ├── linux/                # Service binaries
+│   ├── pids/                 # PID files
+│   ├── logs/                 # Service logs
+│   └── certs/                # SSL certificates
+└── frontend/
+    └── src/
+        ├── modules/          # Feature modules
+        ├── pages/            # Route pages
+        ├── components/       # UI components
+        └── services/         # Wails bindings
 ```
 
-### Service Not Starting
+## ⚙️ Configuration
 
-1. Ensure binary paths in `config/runtime.json` exist
-2. Check logs in `runtime/logs/`
-3. Verify active version and runtime config for the service
+### Service Versions (`config/runtime.json`)
 
-## 📧 Contact
+```json
+{
+  "services": {
+    "php-fpm": {
+      "activeVersion": "8.4",
+      "versions": {
+        "8.4": {
+          "binary": "runtime/linux/php/8.4/sbin/php-fpm",
+          "args": ["--nodaemonize"],
+          "workingDir": "runtime/linux/php/8.4"
+        }
+      }
+    }
+  }
+}
+```
 
-- GitHub: [@Kocannn](https://github.com/Kocannn)
-- Repository: [LocalValet](https://github.com/Kocannn/LocalValet)
+### Project Discovery
+
+Projects are auto-discovered from these directories:
+- `~/Projects`
+- `~/projects`
+- `~/Sites`
+- `~/sites`
+- `~/Code`
+- `~/code`
+- `~/www`
+
+Frameworks detected: Laravel, WordPress, Next.js, Nuxt, Django, PHP, Node.js
+
+## 🔧 Development
+
+### Build Commands
+
+```bash
+# Development with hot reload
+wails dev
+
+# Build production binary
+wails build
+
+# Regenerate Wails bindings
+wails generate module
+
+# Run Go tests
+go test ./internal/... -v
+
+# Build frontend only
+cd frontend && npm run build
+```
+
+### Adding a New Service
+
+1. Add service config to `internal/domain/service/config.go`
+2. Add default port to `internal/platform/linux/linux.go`
+3. Add runtime config to `config/runtime.json`
+4. Place binaries in `runtime/linux/<service>/<version>/`
+
+### Port Conflict Handling
+
+When a default port is in use:
+- LocalValet scans +200 ports for an available one
+- Config files are patched automatically (nginx, php-fpm)
+- CLI flags are injected for other services (mysql, redis)
+
+## 🐛 Troubleshooting
+
+### Services won't start
+
+1. Check if binaries exist in `runtime/linux/`
+2. Verify `config/runtime.json` paths
+3. Check `runtime/logs/` for error messages
+4. Run `GetDiagnostics()` from the app
+
+### Port conflicts
+
+LocalValet auto-remaps ports when conflicts are detected. Check the status message for the actual port being used.
+
+### Permission issues
+
+Some operations require elevated privileges:
+- Binding to ports < 1024
+- Modifying `/etc/hosts`
+- Trusting SSL certificates
+
+### Reset everything
+
+```bash
+rm -rf runtime/pids/*
+rm -rf runtime/logs/*
+rm -rf runtime/certs/*
+rm config/vhosts.json config/ssl.json
+```
+
+## 📄 License
+
+MIT License - See [LICENSE](LICENSE) for details
 
 ## 🙏 Acknowledgments
 
 - [Wails](https://wails.io/) - Go + Web framework
 - [shadcn/ui](https://ui.shadcn.com/) - UI components
 - [Tailwind CSS](https://tailwindcss.com/) - CSS framework
+- [Laragon](https://laragon.org/) - Inspiration
 
 ---
 
