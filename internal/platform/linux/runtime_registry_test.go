@@ -48,8 +48,6 @@ func TestRuntimeRegistry_ConfigLoadAndResolve(t *testing.T) {
 		t.Fatalf("failed to write runtime config: %v", err)
 	}
 
-	reg := NewRuntimeRegistry()
-
 	// Direct load test
 	var cfg runtimeConfig
 	if err := json.Unmarshal([]byte(rawCfg), &cfg); err != nil {
@@ -66,8 +64,6 @@ func TestRuntimeRegistry_ConfigLoadAndResolve(t *testing.T) {
 	if len(phpSvc.Versions) != 2 {
 		t.Errorf("expected 2 versions, got %d", len(phpSvc.Versions))
 	}
-
-	_ = reg
 }
 
 func TestRuntimeRegistry_LegacyJsonSupport(t *testing.T) {
@@ -97,5 +93,45 @@ func TestRuntimeRegistry_LegacyJsonSupport(t *testing.T) {
 	}
 	if ver, ok := svc.Versions["8.4"]; !ok || ver.Binary != "runtime/linux/php/8.4/sbin/php-fpm" {
 		t.Errorf("expected version 8.4 with binary path, got %+v", ver)
+	}
+}
+
+func TestRuntimeRegistry_DynamicDiscoveryAndValidation(t *testing.T) {
+	reg := NewRuntimeRegistry()
+
+	// 1. GetVersions for configured services
+	versions, err := reg.GetVersions("php-fpm")
+	if err != nil {
+		t.Fatalf("GetVersions(php-fpm) error: %v", err)
+	}
+	if len(versions) == 0 {
+		t.Errorf("expected at least 1 version for php-fpm, got 0")
+	}
+
+	// 2. Node versions
+	nodeVersions, err := reg.GetVersions("node")
+	if err != nil {
+		t.Fatalf("GetVersions(node) error: %v", err)
+	}
+	if len(nodeVersions) == 0 {
+		t.Errorf("expected node versions to be present")
+	}
+
+	// 3. ValidateVersion for PHP 8.4 (installed on disk)
+	err = reg.ValidateVersion("php-fpm", "8.4")
+	if err != nil {
+		t.Errorf("expected PHP 8.4 validation to succeed, got %v", err)
+	}
+
+	// 4. ValidateVersion for missing version
+	err = reg.ValidateVersion("php-fpm", "99.99")
+	if err == nil {
+		t.Errorf("expected missing version to fail validation")
+	}
+
+	// 5. Unknown service
+	err = reg.ValidateVersion("unknown_service", "1.0")
+	if err == nil {
+		t.Errorf("expected unknown service validation to fail")
 	}
 }

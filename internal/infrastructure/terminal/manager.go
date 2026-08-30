@@ -312,8 +312,10 @@ func buildInjectedEnv(baseDir string, cfg *runtimeConfig) ([]string, map[string]
 	phpVersion := addActiveBinPaths("php-fpm")
 	_ = addActiveBinPaths("mysql")
 	_ = addActiveBinPaths("nginx")
+	_ = addActiveBinPaths("node")
 
 	composerRoot := filepath.Join(runtimeRoot, "linux", "composer")
+
 	addPath(composerRoot)
 	addPath(filepath.Join(composerRoot, "bin"))
 
@@ -531,11 +533,15 @@ func writeFallbackInitScript(baseDir, shellPath string, versions map[string]stri
 
 func buildBanner(versions map[string]string) string {
 	php := versions["php-fpm"]
+	node := versions["node"]
 	mysql := versions["mysql"]
 	nginx := versions["nginx"]
 
 	if php == "" {
 		php = "-"
+	}
+	if node == "" {
+		node = "-"
 	}
 	if mysql == "" {
 		mysql = "-"
@@ -544,8 +550,9 @@ func buildBanner(versions map[string]string) string {
 		nginx = "-"
 	}
 
-	return fmt.Sprintf("LocalValet Active | PHP %s | MySQL %s | Nginx %s", php, mysql, nginx)
+	return fmt.Sprintf("LocalValet Active | PHP %s | Node %s | MySQL %s | Nginx %s", php, node, mysql, nginx)
 }
+
 
 func activeVersions(cfg *runtimeConfig) map[string]string {
 	result := make(map[string]string)

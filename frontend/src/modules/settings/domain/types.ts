@@ -1,7 +1,14 @@
-export interface PhpRuntimeState {
-  versions: string[];
+export interface RuntimeService {
+  serviceName: string;
+  displayName: string;
   activeVersion: string;
-  isLoading: boolean;
-  isSaving: boolean;
-  error: string;
+  availableVersions: string[];
+  category: string;
+  isRunning: boolean;
+}
+
+export interface RuntimeVersionSetting {
+  serviceName: string;
+  activeVersion: string;
+  availableVersions: string[];
 }

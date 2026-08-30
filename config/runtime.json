@@ -16,9 +16,14 @@
       "activeVersion": "12.2.2",
       "versions": {
         "12.2.2": {
-          "binary": "runtime/linux/mysql/12.2.2/bin/mysqld",
+          "binary": "runtime/linux/mysql/12.2.2/bin/mariadbd",
           "args": [],
           "workingDir": "runtime/linux/mysql/12.2.2"
+        },
+        "8.0": {
+          "binary": "runtime/linux/mysql/8.0/bin/mysqld",
+          "args": [],
+          "workingDir": "runtime/linux/mysql/8.0"
         }
       }
     },
@@ -53,6 +58,24 @@
             "runtime/linux/php/8.4/etc/php-fpm.conf"
           ],
           "workingDir": "runtime/linux/php/8.4"
+        },
+        "8.3": {
+          "binary": "runtime/linux/php/8.3/sbin/php-fpm",
+          "args": [
+            "--nodaemonize",
+            "--fpm-config",
+            "runtime/linux/php/8.3/etc/php-fpm.conf"
+          ],
+          "workingDir": "runtime/linux/php/8.3"
+        },
+        "8.2": {
+          "binary": "runtime/linux/php/8.2/sbin/php-fpm",
+          "args": [
+            "--nodaemonize",
+            "--fpm-config",
+            "runtime/linux/php/8.2/etc/php-fpm.conf"
+          ],
+          "workingDir": "runtime/linux/php/8.2"
         }
       }
     },
@@ -66,6 +89,26 @@
             "daemon off;"
           ],
           "workingDir": "runtime/linux/nginx/1.26"
+        }
+      }
+    },
+    "node": {
+      "activeVersion": "22",
+      "versions": {
+        "22": {
+          "binary": "runtime/linux/node/22/bin/node",
+          "args": [],
+          "workingDir": "runtime/linux/node/22"
+        },
+        "20": {
+          "binary": "runtime/linux/node/20/bin/node",
+          "args": [],
+          "workingDir": "runtime/linux/node/20"
+        },
+        "18": {
+          "binary": "runtime/linux/node/18/bin/node",
+          "args": [],
+          "workingDir": "runtime/linux/node/18"
         }
       }
     }

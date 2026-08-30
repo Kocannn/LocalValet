@@ -8,6 +8,8 @@ export function CheckSudoAccess():Promise<boolean>;
 
 export function GetActiveServiceVersion(arg1:string):Promise<string>;
 
+export function GetAllRuntimeServices():Promise<Array<service.RuntimeServiceInfo>>;
+
 export function GetAllServicesStatus():Promise<Array<service.Status>>;
 
 export function GetAvailableServices():Promise<Array<service.Config>>;
@@ -29,3 +31,27 @@ export function StartService(arg1:string):Promise<service.LogMessage>;
 export function StopService(arg1:string):Promise<service.LogMessage>;
 
 export function ToggleService(arg1:string,arg2:boolean):Promise<service.LogMessage>;
+
+export function GetProjects():Promise<Array<any>>;
+
+export function ScanProjects():Promise<Array<any>>;
+
+export function GetProjectRoots():Promise<Array<string>>;
+
+export function AddProjectRoot(arg1:string):Promise<service.LogMessage>;
+
+export function RemoveProjectRoot(arg1:string):Promise<service.LogMessage>;
+
+export function ToggleProjectVHost(arg1:string,arg2:boolean):Promise<service.LogMessage>;
+
+export function GenerateProjectSSL(arg1:string):Promise<service.LogMessage>;
+
+export function OpenProjectInEditor(arg1:string,arg2:string):Promise<service.LogMessage>;
+
+export function OpenProjectInBrowser(arg1:string):Promise<service.LogMessage>;
+
+export function TrustRootCA():Promise<service.LogMessage>;
+
+export function IsRootCATrusted():Promise<boolean>;
+
+export function SyncHostsDomains():Promise<service.LogMessage>;

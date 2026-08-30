@@ -10,7 +10,7 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { RootLayout } from '@/layouts';
-import { HomePage, ServicesPage, SettingsPage } from '@/pages';
+import { HomePage, ProjectsPage, ServicesPage, SettingsPage } from '@/pages';
 
 function App() {
   return (
@@ -19,11 +19,13 @@ function App() {
         <Route element={<RootLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/services" element={<ServicesPage />} />
+          <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
   );
 }
+
 
 export default App;

@@ -227,3 +227,63 @@ func TestUseCase_VersionManagement(t *testing.T) {
 		t.Errorf("expected active version in manager to be 8.3")
 	}
 }
+
+func TestUseCase_HotSwitching(t *testing.T) {
+	mgr := newMockManager()
+	mgr.versions["php-fpm"] = []string{"8.3", "8.4"}
+	mgr.activeVersions["php-fpm"] = "8.4"
+	mgr.runningServices["php-fpm"] = true // Currently running!
+
+	uc := New(mgr, servicedomain.DefaultConfigs())
+
+	// Hot-switch version from 8.4 to 8.3 while running
+	msg := uc.SetServiceVersion("php-fpm", "8.3")
+	if msg.Level != "success" {
+		t.Errorf("expected success on hot-switch, got %s: %s", msg.Level, msg.Message)
+	}
+
+	// Service should still be running after hot-restart
+	if !mgr.runningServices["php-fpm"] {
+		t.Errorf("expected php-fpm to be running after hot-switch restart")
+	}
+	if mgr.activeVersions["php-fpm"] != "8.3" {
+		t.Errorf("expected active version to be 8.3")
+	}
+}
+
+func TestUseCase_GetAllRuntimeServices(t *testing.T) {
+	mgr := newMockManager()
+	mgr.activeVersions["php-fpm"] = "8.4"
+	mgr.versions["php-fpm"] = []string{"8.3", "8.4"}
+	mgr.activeVersions["node"] = "22"
+	mgr.versions["node"] = []string{"18", "20", "22"}
+
+	uc := New(mgr, servicedomain.DefaultConfigs())
+
+	runtimes := uc.GetAllRuntimeServices()
+	if len(runtimes) == 0 {
+		t.Fatalf("expected runtime services list to not be empty")
+	}
+
+	foundPhp := false
+	foundNode := false
+	for _, r := range runtimes {
+		if r.ServiceName == "php-fpm" {
+			foundPhp = true
+			if r.ActiveVersion != "8.4" {
+				t.Errorf("expected PHP active version 8.4, got %s", r.ActiveVersion)
+			}
+		}
+		if r.ServiceName == "node" {
+			foundNode = true
+			if r.ActiveVersion != "22" {
+				t.Errorf("expected Node active version 22, got %s", r.ActiveVersion)
+			}
+		}
+	}
+
+	if !foundPhp || !foundNode {
+		t.Errorf("expected php-fpm and node in runtime services, got %v", runtimes)
+	}
+}
+

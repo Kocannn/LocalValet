@@ -98,7 +98,12 @@ func (r *RuntimeRegistry) Resolve(serviceName string) (*resolvedRuntime, error) 
 
 	ver, ok := svc.Versions[svc.ActiveVersion]
 	if !ok {
-		return nil, fmt.Errorf("active version %q for service %q is not defined", svc.ActiveVersion, serviceName)
+		// Attempt dynamic resolution from runtime folder
+		inferred := r.inferVersion(serviceName, svc.ActiveVersion)
+		if inferred == nil {
+			return nil, fmt.Errorf("active version %q for service %q is not defined", svc.ActiveVersion, serviceName)
+		}
+		ver = inferred
 	}
 
 	baseDir := r.baseDir()
@@ -128,6 +133,40 @@ func (r *RuntimeRegistry) Resolve(serviceName string) (*resolvedRuntime, error) 
 	}, nil
 }
 
+// ValidateVersion checks if the binary for the given service and version exists and is valid.
+func (r *RuntimeRegistry) ValidateVersion(serviceName, version string) error {
+	cfg, err := r.loadConfig()
+	if err != nil {
+		return err
+	}
+
+	svc, ok := cfg.Services[serviceName]
+	if !ok {
+		return fmt.Errorf("service %q is not configured", serviceName)
+	}
+
+	ver, ok := svc.Versions[version]
+	if !ok {
+		inferred := r.inferVersion(serviceName, version)
+		if inferred == nil {
+			return fmt.Errorf("version %q for %s is not available", version, serviceName)
+		}
+		ver = inferred
+	}
+
+	baseDir := r.baseDir()
+	binPath := resolvePath(baseDir, ver.Binary)
+	info, err := os.Stat(binPath)
+	if err != nil {
+		return fmt.Errorf("binary for %s (%s) not found on disk (%s)", serviceName, version, binPath)
+	}
+	if info.IsDir() {
+		return fmt.Errorf("binary path for %s (%s) is a directory: %s", serviceName, version, binPath)
+	}
+
+	return nil
+}
+
 func (r *RuntimeRegistry) SetActiveVersion(serviceName, version string) error {
 	cfg, err := r.loadConfig()
 	if err != nil {
@@ -140,7 +179,11 @@ func (r *RuntimeRegistry) SetActiveVersion(serviceName, version string) error {
 	}
 
 	if _, ok := svc.Versions[version]; !ok {
-		return fmt.Errorf("version %q for service %q is not available", version, serviceName)
+		inferred := r.inferVersion(serviceName, version)
+		if inferred == nil {
+			return fmt.Errorf("version %q for service %q is not available", version, serviceName)
+		}
+		svc.Versions[version] = inferred
 	}
 
 	svc.ActiveVersion = version
@@ -162,33 +205,107 @@ func (r *RuntimeRegistry) GetActiveVersion(serviceName string) (string, error) {
 }
 
 func (r *RuntimeRegistry) GetVersions(serviceName string) ([]string, error) {
-	log.Printf("[runtime_registry] GetVersions requested for service=%s config=%s", serviceName, r.configPath())
-
 	cfg, err := r.loadConfig()
 	if err != nil {
 		log.Printf("[runtime_registry] failed loading config for service=%s: %v", serviceName, err)
 		return nil, err
 	}
 
-	svc, ok := cfg.Services[serviceName]
-	if !ok {
-		log.Printf("[runtime_registry] service=%s not configured. available=%v", serviceName, mapKeys(cfg.Services))
-		return nil, fmt.Errorf("service %q is not configured", serviceName)
+	versionSet := make(map[string]struct{})
+
+	if svc, ok := cfg.Services[serviceName]; ok {
+		for version := range svc.Versions {
+			versionSet[version] = struct{}{}
+		}
 	}
 
-	versions := make([]string, 0, len(svc.Versions))
-	for version := range svc.Versions {
+	// Scan filesystem for installed versions in runtime/linux/<folder>/
+	folderNames := r.serviceFolderAliases(serviceName)
+	baseDir := r.baseDir()
+	for _, folder := range folderNames {
+		targetDir := filepath.Join(baseDir, "runtime", "linux", folder)
+		entries, err := os.ReadDir(targetDir)
+		if err == nil {
+			for _, entry := range entries {
+				if entry.IsDir() {
+					versionSet[entry.Name()] = struct{}{}
+				}
+			}
+		}
+	}
+
+	versions := make([]string, 0, len(versionSet))
+	for version := range versionSet {
 		versions = append(versions, version)
 	}
 	sort.Strings(versions)
 
-	if len(versions) == 0 {
-		log.Printf("[runtime_registry] service=%s configured but has no versions in runtime config", serviceName)
-	} else {
-		log.Printf("[runtime_registry] service=%s resolved versions=%v active=%s", serviceName, versions, svc.ActiveVersion)
+	return versions, nil
+}
+
+func (r *RuntimeRegistry) serviceFolderAliases(serviceName string) []string {
+	switch serviceName {
+	case "php-fpm":
+		return []string{"php", "php-fpm"}
+	case "mysql":
+		return []string{"mysql", "mariadb"}
+	default:
+		return []string{serviceName}
+	}
+}
+
+func (r *RuntimeRegistry) inferVersion(serviceName, version string) *runtimeVersion {
+	folders := r.serviceFolderAliases(serviceName)
+	baseDir := r.baseDir()
+
+	for _, folder := range folders {
+		versionDir := filepath.Join("runtime", "linux", folder, version)
+		absVersionDir := filepath.Join(baseDir, versionDir)
+
+		candidates := []string{
+			filepath.Join(versionDir, "sbin", serviceName),
+			filepath.Join(versionDir, "bin", serviceName),
+			filepath.Join(versionDir, "bin", folder),
+			filepath.Join(versionDir, serviceName),
+		}
+
+		if serviceName == "php-fpm" {
+			candidates = append([]string{
+				filepath.Join(versionDir, "sbin", "php-fpm"),
+			}, candidates...)
+		}
+		if serviceName == "mysql" {
+			candidates = append([]string{
+				filepath.Join(versionDir, "bin", "mariadbd"),
+				filepath.Join(versionDir, "bin", "mysqld"),
+			}, candidates...)
+		}
+		if serviceName == "node" {
+			candidates = append([]string{
+				filepath.Join(versionDir, "bin", "node"),
+			}, candidates...)
+		}
+
+		for _, candidate := range candidates {
+			if _, err := os.Stat(filepath.Join(baseDir, candidate)); err == nil {
+				return &runtimeVersion{
+					Binary:     candidate,
+					Args:       []string{},
+					WorkingDir: versionDir,
+				}
+			}
+		}
+
+		if _, err := os.Stat(absVersionDir); err == nil {
+			return &runtimeVersion{
+				Binary:     filepath.Join(versionDir, "bin", serviceName),
+				Args:       []string{},
+				WorkingDir: versionDir,
+			}
+		}
 	}
 
-	return versions, nil
+	return nil
 }
 
 func (r *RuntimeRegistry) pidFilePath(serviceName string) string {
