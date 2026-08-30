@@ -1,10 +1,11 @@
 import * as React from "react"
 import { NavLink } from "react-router-dom"
-import { Home, Server, Settings } from "lucide-react"
+import { Code2, FolderKanban, Home, Server, Settings, Terminal } from "lucide-react"
 
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -32,6 +33,11 @@ const data = {
           icon: Server,
         },
         {
+          title: "Projects",
+          url: "/projects",
+          icon: FolderKanban,
+        },
+        {
           title: "Settings",
           url: "/settings",
           icon: Settings,
@@ -40,6 +46,7 @@ const data = {
     },
   ],
 }
+
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -78,7 +85,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         ))}
       </SidebarContent>
+      <SidebarFooter className="border-t border-sidebar-border/70 p-3">
+        <div className="flex flex-col gap-1.5 rounded-lg bg-sidebar-accent/50 p-2 text-xs">
+          <div className="flex items-center justify-between text-muted-foreground font-medium">
+            <span className="flex items-center gap-1">
+              <Code2 className="h-3 w-3" /> Runtime
+            </span>
+            <NavLink to="/settings" className="hover:underline text-[11px] text-primary">
+              Switch
+            </NavLink>
+          </div>
+          <div className="flex flex-wrap gap-1 text-[11px]">
+            <span className="rounded bg-background/80 px-1.5 py-0.5 font-mono text-muted-foreground">
+              PHP 8.4
+            </span>
+            <span className="rounded bg-background/80 px-1.5 py-0.5 font-mono text-muted-foreground">
+              Node 22
+            </span>
+          </div>
+        </div>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
 }
+

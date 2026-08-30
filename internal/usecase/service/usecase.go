@@ -185,9 +185,44 @@ func (u *UseCase) GetActiveServiceVersion(serviceName string) string {
 }
 
 func (u *UseCase) SetServiceVersion(serviceName, version string) LogMessage {
-	err := u.manager.SetServiceVersion(serviceName, version)
 	timestamp := time.Now().Format("15:04:05")
 
+	isRunning, _ := u.manager.GetServiceStatus(serviceName)
+
+	if isRunning {
+		// Hot-switch: Gracefully restart service with the new version
+		if err := u.manager.StopService(serviceName); err != nil {
+			return LogMessage{
+				Timestamp: timestamp,
+				Level:     "error",
+				Message:   fmt.Sprintf("Failed to stop %s during version switch: %v", serviceName, err),
+			}
+		}
+
+		if err := u.manager.SetServiceVersion(serviceName, version); err != nil {
+			return LogMessage{
+				Timestamp: timestamp,
+				Level:     "error",
+				Message:   fmt.Sprintf("Failed to set %s version to %s: %v", serviceName, version, err),
+			}
+		}
+
+		if err := u.manager.StartService(serviceName); err != nil {
+			return LogMessage{
+				Timestamp: timestamp,
+				Level:     "error",
+				Message:   fmt.Sprintf("Switched to version %s, but failed to restart %s: %v", version, serviceName, err),
+			}
+		}
+
+		return LogMessage{
+			Timestamp: timestamp,
+			Level:     "success",
+			Message:   fmt.Sprintf("%s switched to version %s and restarted successfully", serviceName, version),
+		}
+	}
+
+	err := u.manager.SetServiceVersion(serviceName, version)
 	if err != nil {
 		return LogMessage{
 			Timestamp: timestamp,
@@ -202,3 +237,38 @@ func (u *UseCase) SetServiceVersion(serviceName, version string) LogMessage {
 		Message:   fmt.Sprintf("%s version switched to %s", serviceName, version),
 	}
 }
+
+// GetAllRuntimeServices returns version information and status for all configurable runtimes.
+func (u *UseCase) GetAllRuntimeServices() []servicedomain.RuntimeServiceInfo {
+	serviceList := []string{"php-fpm", "node", "mysql", "nginx", "apache", "redis", "postgresql"}
+	result := make([]servicedomain.RuntimeServiceInfo, 0, len(serviceList))
+
+	for _, svcName := range serviceList {
+		cfg, hasCfg := servicedomain.GetConfig(svcName, u.configs)
+		displayName := svcName
+		category := "Runtime"
+		if hasCfg {
+			displayName = cfg.DisplayName
+			category = cfg.Category
+		} else if svcName == "node" {
+			displayName = "Node.js"
+			category = "Runtime"
+		}
+
+		active, _ := u.manager.GetActiveServiceVersion(svcName)
+		versions, _ := u.manager.GetAvailableVersions(svcName)
+		isRunning, _ := u.manager.GetServiceStatus(svcName)
+
+		result = append(result, servicedomain.RuntimeServiceInfo{
+			ServiceName:       svcName,
+			DisplayName:       displayName,
+			ActiveVersion:     active,
+			AvailableVersions: versions,
+			Category:          category,
+			IsRunning:         isRunning,
+		})
+	}
+
+	return result
+}
+

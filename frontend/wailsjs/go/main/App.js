@@ -14,6 +14,10 @@ export function GetActiveServiceVersion(arg1) {
   return window['go']['main']['App']['GetActiveServiceVersion'](arg1);
 }
 
+export function GetAllRuntimeServices() {
+  return window['go']['main']['App']['GetAllRuntimeServices']();
+}
+
 export function GetAllServicesStatus() {
   return window['go']['main']['App']['GetAllServicesStatus']();
 }
@@ -56,4 +60,52 @@ export function StopService(arg1) {
 
 export function ToggleService(arg1, arg2) {
   return window['go']['main']['App']['ToggleService'](arg1, arg2);
+}
+
+export function GetProjects() {
+  return window['go']['main']['App']['GetProjects']();
+}
+
+export function ScanProjects() {
+  return window['go']['main']['App']['ScanProjects']();
+}
+
+export function GetProjectRoots() {
+  return window['go']['main']['App']['GetProjectRoots']();
+}
+
+export function AddProjectRoot(arg1) {
+  return window['go']['main']['App']['AddProjectRoot'](arg1);
+}
+
+export function RemoveProjectRoot(arg1) {
+  return window['go']['main']['App']['RemoveProjectRoot'](arg1);
+}
+
+export function ToggleProjectVHost(arg1, arg2) {
+  return window['go']['main']['App']['ToggleProjectVHost'](arg1, arg2);
+}
+
+export function GenerateProjectSSL(arg1) {
+  return window['go']['main']['App']['GenerateProjectSSL'](arg1);
+}
+
+export function OpenProjectInEditor(arg1, arg2) {
+  return window['go']['main']['App']['OpenProjectInEditor'](arg1, arg2);
+}
+
+export function OpenProjectInBrowser(arg1) {
+  return window['go']['main']['App']['OpenProjectInBrowser'](arg1);
+}
+
+export function TrustRootCA() {
+  return window['go']['main']['App']['TrustRootCA']();
+}
+
+export function IsRootCATrusted() {
+  return window['go']['main']['App']['IsRootCATrusted']();
+}
+
+export function SyncHostsDomains() {
+  return window['go']['main']['App']['SyncHostsDomains']();
 }

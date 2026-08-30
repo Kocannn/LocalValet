@@ -21,3 +21,14 @@ type Status struct {
 	Category  string `json:"category,omitempty"`
 }
 
+// RuntimeServiceInfo describes versioning details for a service or runtime environment.
+type RuntimeServiceInfo struct {
+	ServiceName       string   `json:"serviceName"`
+	DisplayName       string   `json:"displayName"`
+	ActiveVersion     string   `json:"activeVersion"`
+	AvailableVersions []string `json:"availableVersions"`
+	Category          string   `json:"category"`
+	IsRunning         bool     `json:"isRunning"`
+}
+
+
