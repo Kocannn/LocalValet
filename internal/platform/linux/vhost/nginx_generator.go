@@ -193,24 +193,32 @@ func fileExists(path string) bool {
 }
 
 func findBaseDir() string {
-	exePath, err := os.Executable()
-	if err == nil {
-		exeDir := filepath.Dir(exePath)
-		if fileExists(filepath.Join(exeDir, "config", "runtime.json")) {
-			return exeDir
+	if exePath, err := os.Executable(); err == nil && exePath != "" {
+		dir := filepath.Dir(exePath)
+		for {
+			if fileExists(filepath.Join(dir, "config", "runtime.json")) {
+				return dir
+			}
+			parent := filepath.Dir(dir)
+			if parent == dir || parent == "." || parent == "/" {
+				break
+			}
+			dir = parent
 		}
 	}
 
-	cwd, err := os.Getwd()
-	if err == nil {
-		if fileExists(filepath.Join(cwd, "config", "runtime.json")) {
-			return cwd
+	if cwd, err := os.Getwd(); err == nil && cwd != "" {
+		dir := cwd
+		for {
+			if fileExists(filepath.Join(dir, "config", "runtime.json")) {
+				return dir
+			}
+			parent := filepath.Dir(dir)
+			if parent == dir || parent == "." || parent == "/" {
+				break
+			}
+			dir = parent
 		}
-		parent := filepath.Dir(cwd)
-		if fileExists(filepath.Join(parent, "config", "runtime.json")) {
-			return parent
-		}
-		return cwd
 	}
 
 	return "."

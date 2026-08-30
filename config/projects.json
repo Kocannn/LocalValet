@@ -1,0 +1,158 @@
+{
+  "roots": [
+    "/home/kocan/Projects",
+    "/home/kocan/Coding"
+  ],
+  "projects": [
+    {
+      "id": "abala",
+      "name": "Abala",
+      "path": "/home/kocan/Coding/abala",
+      "framework": "nextjs",
+      "webRoot": ".",
+      "domain": "abala.test",
+      "vhostEnabled": true,
+      "sslEnabled": true,
+      "targetPort": 3000,
+      "createdAt": "2026-08-30 13:53:42",
+      "updatedAt": "2026-08-30 13:53:42"
+    },
+    {
+      "id": "ai-sales-page-generator",
+      "name": "Ai Sales Page Generator",
+      "path": "/home/kocan/Coding/ai-sales-page-generator",
+      "framework": "laravel",
+      "webRoot": "public",
+      "domain": "ai-sales-page-generator.test",
+      "vhostEnabled": true,
+      "sslEnabled": true,
+      "createdAt": "2026-08-30 13:53:42",
+      "updatedAt": "2026-08-30 13:53:42"
+    },
+    {
+      "id": "caleg-fe",
+      "name": "Caleg Fe",
+      "path": "/home/kocan/Coding/caleg-fe",
+      "framework": "nextjs",
+      "webRoot": ".",
+      "domain": "caleg-fe.test",
+      "vhostEnabled": true,
+      "sslEnabled": true,
+      "targetPort": 3000,
+      "createdAt": "2026-08-30 13:53:42",
+      "updatedAt": "2026-08-30 13:53:42"
+    },
+    {
+      "id": "interview-qbit",
+      "name": "Interview Qbit",
+      "path": "/home/kocan/Coding/interview-qbit",
+      "framework": "nextjs",
+      "webRoot": ".",
+      "domain": "interview-qbit.test",
+      "vhostEnabled": true,
+      "sslEnabled": true,
+      "targetPort": 3000,
+      "createdAt": "2026-08-30 13:53:42",
+      "updatedAt": "2026-08-30 13:53:42"
+    },
+    {
+      "id": "landingpage",
+      "name": "LandingPage",
+      "path": "/home/kocan/Coding/landingPage",
+      "framework": "laravel",
+      "webRoot": "public",
+      "domain": "landingpage.test",
+      "vhostEnabled": true,
+      "sslEnabled": true,
+      "createdAt": "2026-08-30 13:53:42",
+      "updatedAt": "2026-08-30 13:53:42"
+    },
+    {
+      "id": "momata",
+      "name": "Momata",
+      "path": "/home/kocan/Coding/momata",
+      "framework": "nextjs",
+      "webRoot": ".",
+      "domain": "momata.test",
+      "vhostEnabled": true,
+      "sslEnabled": true,
+      "targetPort": 3000,
+      "createdAt": "2026-08-30 13:53:42",
+      "updatedAt": "2026-08-30 13:53:42"
+    },
+    {
+      "id": "orca-reservasi",
+      "name": "Orca Reservasi",
+      "path": "/home/kocan/Coding/orca-reservasi",
+      "framework": "laravel",
+      "webRoot": "public",
+      "domain": "orca-reservasi.test",
+      "vhostEnabled": true,
+      "sslEnabled": true,
+      "createdAt": "2026-08-30 13:53:42",
+      "updatedAt": "2026-08-30 13:53:42"
+    },
+    {
+      "id": "orca-wa-service",
+      "name": "Orca Wa Service",
+      "path": "/home/kocan/Coding/orca-wa-service",
+      "framework": "static",
+      "webRoot": ".",
+      "domain": "orca-wa-service.test",
+      "vhostEnabled": true,
+      "sslEnabled": true,
+      "createdAt": "2026-08-30 13:53:42",
+      "updatedAt": "2026-08-30 13:53:42"
+    },
+    {
+      "id": "sausu-trans",
+      "name": "Sausu Trans",
+      "path": "/home/kocan/Coding/sausu-trans",
+      "framework": "laravel",
+      "webRoot": "public",
+      "domain": "sausu-trans.test",
+      "vhostEnabled": true,
+      "sslEnabled": true,
+      "createdAt": "2026-08-30 13:53:42",
+      "updatedAt": "2026-08-30 13:53:42"
+    },
+    {
+      "id": "smk7-academic-system",
+      "name": "Smk7 Academic System",
+      "path": "/home/kocan/Coding/smk7-academic-system",
+      "framework": "laravel",
+      "webRoot": "public",
+      "domain": "smk7-academic-system.test",
+      "vhostEnabled": true,
+      "sslEnabled": true,
+      "createdAt": "2026-08-30 13:53:42",
+      "updatedAt": "2026-08-30 13:53:42"
+    },
+    {
+      "id": "web-porto",
+      "name": "Web Porto",
+      "path": "/home/kocan/Coding/web-porto",
+      "framework": "nextjs",
+      "webRoot": ".",
+      "domain": "web-porto.test",
+      "vhostEnabled": true,
+      "sslEnabled": true,
+      "targetPort": 3000,
+      "createdAt": "2026-08-30 13:53:42",
+      "updatedAt": "2026-08-30 13:53:42"
+    },
+    {
+      "id": "web-umkm",
+      "name": "Web Umkm",
+      "path": "/home/kocan/Coding/web-umkm",
+      "framework": "nextjs",
+      "webRoot": ".",
+      "domain": "web-umkm.test",
+      "vhostEnabled": true,
+      "sslEnabled": true,
+      "targetPort": 3000,
+      "createdAt": "2026-08-30 13:53:42",
+      "updatedAt": "2026-08-30 13:53:42"
+    }
+  ]
+}

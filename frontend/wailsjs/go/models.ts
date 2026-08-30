@@ -1,3 +1,44 @@
+export namespace project {
+	
+	export class Project {
+	    id: string;
+	    name: string;
+	    path: string;
+	    framework: string;
+	    webRoot: string;
+	    domain: string;
+	    vhostEnabled: boolean;
+	    sslEnabled: boolean;
+	    targetPort?: number;
+	    phpVersion?: string;
+	    nodeVersion?: string;
+	    createdAt?: string;
+	    updatedAt?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Project(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.path = source["path"];
+	        this.framework = source["framework"];
+	        this.webRoot = source["webRoot"];
+	        this.domain = source["domain"];
+	        this.vhostEnabled = source["vhostEnabled"];
+	        this.sslEnabled = source["sslEnabled"];
+	        this.targetPort = source["targetPort"];
+	        this.phpVersion = source["phpVersion"];
+	        this.nodeVersion = source["nodeVersion"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
+
+}
+
 export namespace service {
 	
 	export class Config {
