@@ -3,7 +3,7 @@ package main
 import (
 	projectdomain "LocalValet/internal/domain/project"
 	servicedomain "LocalValet/internal/domain/service"
-	servicemonitor "LocalValet/internal/infrastructure/monitor"
+	"LocalValet/internal/infrastructure/events"
 	terminalinfra "LocalValet/internal/infrastructure/terminal"
 	"LocalValet/internal/platform"
 	projectplatform "LocalValet/internal/platform/linux/project"
@@ -42,10 +42,10 @@ type App struct {
 	emitter           servicemonitor.EventEmitter
 }
 
-// LogMessage represents a log entry
+// LogMessage represents a log entry.
 type LogMessage = serviceusecase.LogMessage
 
-// NewApp creates a new App application struct
+// NewApp creates a new App application struct.
 func NewApp() *App {
 	configs := servicedomain.DefaultConfigs()
 	manager := platform.NewServiceManager()
@@ -113,7 +113,7 @@ func (a *App) Greet(name string) string {
 
 // GetServiceStatus returns status for a single service
 func (a *App) GetServiceStatus(serviceName string) servicedomain.Status {
-	return a.serviceUC.GetServiceStatus(serviceName)
+	return a.controller.GetServiceStatus(serviceName)
 }
 
 // CheckServiceHealth returns health status for a single service
@@ -135,7 +135,7 @@ func (a *App) StartService(serviceName string) LogMessage {
 	return msg
 }
 
-// StopService stops a service
+// StopService stops a service.
 func (a *App) StopService(serviceName string) LogMessage {
 	msg := a.serviceUC.StopService(serviceName)
 	if a.emitter != nil {
@@ -167,7 +167,7 @@ func (a *App) GetServiceVersions(serviceName string) []string {
 
 // GetActiveServiceVersion returns active runtime version for a service.
 func (a *App) GetActiveServiceVersion(serviceName string) string {
-	return a.serviceUC.GetActiveServiceVersion(serviceName)
+	return a.controller.GetActiveServiceVersion(serviceName)
 }
 
 // SetServiceVersion updates active runtime version for a service.
@@ -186,11 +186,7 @@ func (a *App) GetAllRuntimeServices() []servicedomain.RuntimeServiceInfo {
 
 // OpenContextTerminal launches a new terminal window with runtime-injected environment.
 func (a *App) OpenContextTerminal(projectDir string) LogMessage {
-	msg := a.terminalUC.OpenContextTerminal(projectDir, "")
-	if a.emitter != nil {
-		a.emitter.Emit("service:log", msg)
-	}
-	return LogMessage(msg)
+	return a.controller.OpenContextTerminal(projectDir)
 }
 
 // -------------------------------------------------------------

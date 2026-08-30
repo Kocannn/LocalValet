@@ -7,12 +7,12 @@ import (
 
 // CheckSudoAccess checks if the user has sudo access
 func (a *App) CheckSudoAccess() bool {
-	return a.systemUC.CheckSudoAccess()
+	return a.controller.CheckSudoAccess()
 }
 
 // GetSystemInfo returns system information
 func (a *App) GetSystemInfo() map[string]string {
-	return a.systemUC.GetSystemInfo()
+	return a.controller.GetSystemInfo()
 }
 
 // GetServiceCommand returns the appropriate service command for the OS
